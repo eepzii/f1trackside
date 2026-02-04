@@ -1,10 +1,5 @@
 package types
 
-import (
-	"encoding/json"
-	"strconv"
-)
-
 type TimingDataResponse struct {
 	TimingData TimingData `json:"TimingData"`
 }
@@ -76,45 +71,19 @@ type LastLapTime struct {
 }
 
 func (s *Sectors) UnmarshalJSON(data []byte) error {
-	var sectorMap = make(map[string]Sector)
-
-	if len(data) > 0 && data[0] == '[' {
-
-		var slice []Sector
-		if err := json.Unmarshal(data, &slice); err != nil {
-			return err
-		}
-
-		for i, sector := range slice {
-			sectorMap[strconv.Itoa(i)] = sector
-		}
-
-	} else if err := json.Unmarshal(data, &sectorMap); err != nil {
+	m, err := unmarshalDynamicJSON[Sector](data)
+	if err != nil {
 		return err
 	}
-
-	*s = sectorMap
+	*s = m
 	return nil
 }
 
 func (s *Segments) UnmarshalJSON(data []byte) error {
-	var segmentMap = make(map[string]Segment)
-
-	if len(data) > 0 && data[0] == '[' {
-
-		var slice []Segment
-		if err := json.Unmarshal(data, &slice); err != nil {
-			return err
-		}
-
-		for i, segment := range slice {
-			segmentMap[strconv.Itoa(i)] = segment
-		}
-
-	} else if err := json.Unmarshal(data, &segmentMap); err != nil {
+	m, err := unmarshalDynamicJSON[Segment](data)
+	if err != nil {
 		return err
 	}
-
-	*s = segmentMap
+	*s = m
 	return nil
 }

@@ -1,10 +1,5 @@
 package types
 
-import (
-	"encoding/json"
-	"strconv"
-)
-
 type TimingAppDataResponse struct {
 	TimingAppData TimingAppData `json:"TimingAppData"`
 }
@@ -34,23 +29,10 @@ type Stint struct {
 type Stints map[string]Stint
 
 func (s *Stints) UnmarshalJSON(data []byte) error {
-	var stintMap = make(map[string]Stint)
-
-	if len(data) > 0 && data[0] == '[' {
-
-		var slice []Stint
-		if err := json.Unmarshal(data, &slice); err != nil {
-			return err
-		}
-
-		for i, stint := range slice {
-			stintMap[strconv.Itoa(i)] = stint
-		}
-
-	} else if err := json.Unmarshal(data, &stintMap); err != nil {
+	m, err := unmarshalDynamicJSON[Stint](data)
+	if err != nil {
 		return err
 	}
-
-	*s = stintMap
+	*s = m
 	return nil
 }
