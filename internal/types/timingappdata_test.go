@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TODO: apply refactor changes of TestParseTimingData here as well.
+// TODO: refactor test table
 func TestParseTimingAppData(t *testing.T) {
 
 	jsonInput := []byte(`{
@@ -91,7 +91,6 @@ func TestParseTimingAppData(t *testing.T) {
 			ExpectedTotalLaps       *int
 		}{
 			"0": {"0", "UNKNOWN", "false", &three},
-			"1": {"", "", "", nil},
 		}},
 		{"16", "16", 2, map[string]struct {
 			ExpectedTyresNotChanged string
@@ -125,54 +124,50 @@ func TestParseTimingAppData(t *testing.T) {
 
 		driver, exists := response.TimingAppData.Lines[test.DriverNumber]
 		if !exists {
-			t.Errorf("missing %s driver from map", test.DriverNumber)
+			t.Errorf("missing key on .Lines: %s", test.DriverNumber)
 			continue
 		}
 
-		if driver.RacingNumber != test.ExpectedRacingNumber {
-			t.Errorf(`expected .Lines.RacingNumber "%s", got: "%s"`,
-				test.ExpectedRacingNumber, driver.RacingNumber)
+		err := validateValues(driver.RacingNumber, test.ExpectedRacingNumber)
+		if err != nil {
+			t.Errorf(".Lines[%s].RacingNumber -> %v", test.DriverNumber, err)
 		}
 
-		if len(driver.Stints) != test.ExpectedStintMapSize {
-			t.Errorf(`expected .Lines.Stints length "%d", got: "%d"`,
-				test.ExpectedStintMapSize, len(driver.Stints))
+		err = validateValues(len(driver.Stints), test.ExpectedStintMapSize)
+		if err != nil {
+			t.Errorf(".Lines[%s].Stints map size -> %v", test.DriverNumber, err)
 		}
 
 		for key, stint := range driver.Stints {
 
 			expectedStint, ok := test.ExpectedStints[key]
 			if !ok {
-				t.Errorf(`unexpected stint map key "%s" on driver number "%s"`, key, test.DriverNumber)
+				t.Errorf("missing key on .Lines[%s].Stints: %s", test.DriverNumber, key)
 				continue
 			}
 
-			if stint.TyresNotChanged != expectedStint.ExpectedTyresNotChanged {
-				t.Errorf(`expected .Lines.Stints.TyresNotChanged "%s", got: "%s"`,
-					expectedStint.ExpectedTyresNotChanged, stint.TyresNotChanged)
+			err = validateValues(stint.TyresNotChanged, expectedStint.ExpectedTyresNotChanged)
+			if err != nil {
+				t.Errorf(".Lines[%s].Stints[%s].TyresNotChanged -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if stint.Compound != expectedStint.ExpectedCompound {
-				t.Errorf(`expected .Lines.Stints.Compound "%s", got: "%s"`,
-					expectedStint.ExpectedCompound, stint.Compound)
+			err = validateValues(stint.Compound, expectedStint.ExpectedCompound)
+			if err != nil {
+				t.Errorf(".Lines[%s].Stints[%s].Compound -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if stint.New != expectedStint.ExpectedNew {
-				t.Errorf(`expected .Lines.Stints.New "%s", got: "%s"`,
-					expectedStint.ExpectedNew, stint.New)
+			err = validateValues(stint.New, expectedStint.ExpectedNew)
+			if err != nil {
+				t.Errorf(".Lines[%s].Stints[%s].New -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if stint.TotalLaps == nil && expectedStint.ExpectedTotalLaps == nil {
-				// ok
-			} else if stint.TotalLaps == nil && expectedStint.ExpectedTotalLaps != nil {
-				t.Errorf(`expected .Lines.Stints.TotalLaps "%d", got: "%v"`,
-					*expectedStint.ExpectedTotalLaps, stint.TotalLaps)
-			} else if stint.TotalLaps != nil && expectedStint.ExpectedTotalLaps == nil {
-				t.Errorf(`expected .Lines.Stints.TotalLaps "%v", got: "%d"`,
-					expectedStint.ExpectedTotalLaps, *stint.TotalLaps)
-			} else if *stint.TotalLaps != *expectedStint.ExpectedTotalLaps {
-				t.Errorf(`expected .Lines.Stints.TotalLaps "%d", got: "%d"`,
-					*expectedStint.ExpectedTotalLaps, *stint.TotalLaps)
+			err = validatePointers(stint.TotalLaps, expectedStint.ExpectedTotalLaps)
+			if err != nil {
+				t.Errorf(".Lines[%s].Stints[%s].TotalLaps -> %v",
+					test.DriverNumber, key, err)
 			}
 
 		}

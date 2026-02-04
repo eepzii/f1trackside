@@ -5,8 +5,7 @@ import (
 	"testing"
 )
 
-// TODO: refactor duplicate pointer validation logic into a helper function to reduce verbose code.
-// and check over fields again that might need to be a pointer value to handle empty vs. nil updates
+// TODO: refactor test table
 func TestParseTimingData(t *testing.T) {
 
 	jsonInput := []byte(`{
@@ -183,191 +182,131 @@ func TestParseTimingData(t *testing.T) {
 
 		driver, exists := response.TimingData.Lines[test.DriverNumber]
 		if !exists {
-			t.Errorf("missing %s driver from map", test.DriverNumber)
+			t.Errorf("missing key on .Lines: %s", test.DriverNumber)
 			continue
 		}
 
-		if driver.RacingNumber != test.ExpectedRacingNumber {
-			t.Errorf(`expected .Lines.RacingNumber "%s", got: "%s"`,
-				test.ExpectedRacingNumber, driver.RacingNumber)
+		err := validateValues(driver.RacingNumber, test.ExpectedRacingNumber)
+		if err != nil {
+			t.Errorf(".Lines[%s].RacingNumber -> %v", test.DriverNumber, err)
 		}
 
-		if driver.Status == nil && test.ExpectedStatus == nil {
-			// ok
-		} else if driver.Status == nil && test.ExpectedStatus != nil {
-			t.Errorf(`expected .Lines.Status "%d", got: "%v"`,
-				*test.ExpectedStatus, driver.Status)
-		} else if driver.Status != nil && test.ExpectedStatus == nil {
-			t.Errorf(`expected .Lines.Status "%v", got: "%d"`,
-				test.ExpectedStatus, *driver.Status)
-		} else if *driver.Status != *test.ExpectedStatus {
-			t.Errorf(`expected .Lines.Status "%d", got: "%d"`,
-				*test.ExpectedStatus, *driver.Status)
+		err = validatePointers(driver.Status, test.ExpectedStatus)
+		if err != nil {
+			t.Errorf(".Lines[%s].Status -> %v", test.DriverNumber, err)
 		}
 
-		if driver.InPit == nil && test.ExpectedInPit == nil {
-			// ok
-		} else if driver.InPit == nil && test.ExpectedInPit != nil {
-			t.Errorf(`expected .Lines.InPit "%v", got: "%v"`,
-				*test.ExpectedInPit, driver.InPit)
-		} else if driver.InPit != nil && test.ExpectedInPit == nil {
-			t.Errorf(`expected .Lines.InPit "%v", got: "%v"`,
-				test.ExpectedInPit, *driver.InPit)
-		} else if *driver.InPit != *test.ExpectedInPit {
-			t.Errorf(`expected .Lines.InPit "%v", got: "%v"`,
-				*test.ExpectedInPit, *driver.InPit)
+		err = validatePointers(driver.InPit, test.ExpectedInPit)
+		if err != nil {
+			t.Errorf(".Lines[%s].InPit -> %v", test.DriverNumber, err)
 		}
 
-		if len(driver.Sectors) != test.ExpectedSectorMapSize {
-			t.Errorf(`expected .Lines.Sectors length "%d", got: "%d"`,
-				test.ExpectedSectorMapSize, len(driver.Sectors))
+		err = validateValues(len(driver.Sectors), test.ExpectedSectorMapSize)
+		if err != nil {
+			t.Errorf(".Lines[%s].Sectors map size -> %v", test.DriverNumber, err)
 		}
 
 		for key, sector := range driver.Sectors {
 
 			expectedSector, ok := test.ExpectedSectors[key]
 			if !ok {
-				t.Errorf(`unexpected sector map key "%s" on driver number "%s"`, key, test.DriverNumber)
+				t.Errorf("missing key on .Lines[%s].Sectors: %s", test.DriverNumber, key)
 				continue
 			}
 
-			if sector.Value != expectedSector.ExpectedValue {
-				t.Errorf(`expected .Lines.Sectors.Value "%s", got: "%s"`,
-					expectedSector.ExpectedValue, sector.Value)
+			err = validateValues(sector.Value, expectedSector.ExpectedValue)
+			if err != nil {
+				t.Errorf(".Lines[%s].Sectors[%s].Value -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if sector.Status == nil && expectedSector.ExpectedStatus == nil {
-				// ok
-			} else if sector.Status == nil && expectedSector.ExpectedStatus != nil {
-				t.Errorf(`expected .Lines.Sectors.Status "%d", got: "%v"`,
-					*expectedSector.ExpectedStatus, sector.Status)
-				continue
-			} else if sector.Status != nil && expectedSector.ExpectedStatus == nil {
-				t.Errorf(`expected .Lines.Sectors.Status "%v", got: "%d"`,
-					expectedSector.ExpectedStatus, *sector.Status)
-				continue
-			} else if *sector.Status != *expectedSector.ExpectedStatus {
-				t.Errorf(`expected .Lines.Sectors.Status "%d", got: "%d"`,
-					*expectedSector.ExpectedStatus, *sector.Status)
+			err = validatePointers(sector.Status, expectedSector.ExpectedStatus)
+			if err != nil {
+				t.Errorf(".Lines[%s].Sectors[%s].Status -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if len(sector.Segments) != expectedSector.ExpectedSegmentMapSize {
-				t.Errorf(`expected .Lines.Sectors.Segments length "%d", got: "%d"`,
-					expectedSector.ExpectedSegmentMapSize, len(sector.Segments))
+			err = validateValues(len(sector.Segments), expectedSector.ExpectedSegmentMapSize)
+			if err != nil {
+				t.Errorf(".Lines[%s].Sectors[%s].Segments map size -> %v",
+					test.DriverNumber, key, err)
 			}
 
 			for segmentMapKey, segment := range sector.Segments {
 
 				expectedSegment, ok := expectedSector.ExpectedSegments[segmentMapKey]
 				if !ok {
-					t.Errorf(`unexpected segment map key "%s" in sector "%s"`, segmentMapKey, key)
+					t.Errorf("missing key on .Lines[%s].Sectors[%s].Segments: %s",
+						test.DriverNumber, key, segmentMapKey)
 					continue
 				}
 
-				if segment.Status == nil && expectedSegment.ExpectedStatus == nil {
-					// ok
-				} else if segment.Status == nil && expectedSegment.ExpectedStatus != nil {
-					t.Errorf(`expected .Lines.Sectors.Segments.Status "%d", got: "%v"`,
-						*expectedSegment.ExpectedStatus, segment.Status)
-				} else if segment.Status != nil && expectedSegment.ExpectedStatus == nil {
-					t.Errorf(`expected .Lines.Sectors.Segments.Status "%v", got: "%d"`,
-						expectedSegment.ExpectedStatus, *segment.Status)
-				} else if *segment.Status != *expectedSegment.ExpectedStatus {
-					t.Errorf(`expected .Lines.Sectors.Segments.Status "%d", got: "%d"`,
-						*expectedSegment.ExpectedStatus, *segment.Status)
+				err = validatePointers(segment.Status, expectedSegment.ExpectedStatus)
+				if err != nil {
+					t.Errorf(".Lines[%s].Sectors[%s].Segments[%s].Status -> %v",
+						test.DriverNumber, key, segmentMapKey, err)
 				}
 
 			}
 
 		}
 
-		if len(driver.Speeds) != test.ExpectedSpeedMapSize {
-			t.Errorf(`expected .Lines.Speeds length "%d", got: "%d"`,
-				test.ExpectedSpeedMapSize, len(driver.Speeds))
+		err = validateValues(len(driver.Speeds), test.ExpectedSpeedMapSize)
+		if err != nil {
+			t.Errorf(".Lines[%s].Speeds map size -> %v", test.DriverNumber, err)
 		}
 
 		for key, speed := range driver.Speeds {
 
 			expectedSpeed, ok := test.ExpectedSpeeds[key]
 			if !ok {
-				t.Errorf(`unexpected speed map key "%s" on driver number "%s"`, key, test.DriverNumber)
+				t.Errorf("missing key on .Lines[%s].Speeds: %s", test.DriverNumber, key)
 				continue
 			}
 
-			if speed.Value != expectedSpeed.ExpectedValue {
-				t.Errorf(`expected .Lines.Speeds.Value "%s", got: "%s"`,
-					expectedSpeed.ExpectedValue, speed.Value)
+			err = validateValues(speed.Value, expectedSpeed.ExpectedValue)
+			if err != nil {
+				t.Errorf(".Lines[%s].Speeds[%s].Value -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if speed.Status == nil && expectedSpeed.ExpectedStatus == nil {
-				// ok
-			} else if speed.Status == nil && expectedSpeed.ExpectedStatus != nil {
-				t.Errorf(`expected .Lines.Speeds.Status "%d", got: "%v"`,
-					*expectedSpeed.ExpectedStatus, speed.Status)
-				continue
-			} else if speed.Status != nil && expectedSpeed.ExpectedStatus == nil {
-				t.Errorf(`expected .Lines.Speeds.Status "%v", got: "%d"`,
-					expectedSpeed.ExpectedStatus, *speed.Status)
-				continue
-			} else if *speed.Status != *expectedSpeed.ExpectedStatus {
-				t.Errorf(`expected .Lines.Speeds.Status "%d", got: "%d"`,
-					*expectedSpeed.ExpectedStatus, *speed.Status)
+			err = validatePointers(speed.Status, expectedSpeed.ExpectedStatus)
+			if err != nil {
+				t.Errorf(".Lines[%s].Speeds[%s].Status -> %v",
+					test.DriverNumber, key, err)
 			}
 
-			if speed.OverallFastest == nil && expectedSpeed.ExpectedOverallFastest == nil {
-				// ok
-			} else if speed.OverallFastest == nil && expectedSpeed.ExpectedOverallFastest != nil {
-				t.Errorf(`expected .Lines.Speeds.OverallFastest "%v", got: "%v"`,
-					*expectedSpeed.ExpectedOverallFastest, speed.OverallFastest)
-			} else if speed.OverallFastest != nil && expectedSpeed.ExpectedOverallFastest == nil {
-				t.Errorf(`expected .Lines.Speeds.OverallFastest "%v", got: "%v"`,
-					expectedSpeed.ExpectedOverallFastest, *speed.OverallFastest)
-			} else if *speed.OverallFastest != *expectedSpeed.ExpectedOverallFastest {
-				t.Errorf(`expected .Lines.Speeds.OverallFastest "%v", got: "%v"`,
-					*expectedSpeed.ExpectedOverallFastest, *speed.OverallFastest)
+			err = validatePointers(speed.OverallFastest, expectedSpeed.ExpectedOverallFastest)
+			if err != nil {
+				t.Errorf(".Lines[%s].Speeds[%s].OverallFastest -> %v",
+					test.DriverNumber, key, err)
 			}
 
 		}
 
-		if driver.BestLapTime.Value != test.ExpectedBestLapTimeValue {
-			t.Errorf(`expected .Lines.BestLapTime.Value "%s", got: "%s"`,
-				test.ExpectedBestLapTimeValue, driver.BestLapTime.Value)
+		err = validateValues(driver.BestLapTime.Value, test.ExpectedBestLapTimeValue)
+		if err != nil {
+			t.Errorf(".Lines[%s].BestLapTime.Value -> %v", test.DriverNumber, err)
 		}
 
-		if driver.BestLapTime.Lap != test.ExpectedBestLapTimeLap {
-			t.Errorf(`expected .Lines.BestLapTime.Lap "%d", got: "%d"`,
-				test.ExpectedBestLapTimeLap, driver.BestLapTime.Lap)
+		err = validateValues(driver.BestLapTime.Lap, test.ExpectedBestLapTimeLap)
+		if err != nil {
+			t.Errorf(".Lines[%s].BestLapTime.Lap -> %v", test.DriverNumber, err)
 		}
 
-		if driver.LastLapTime.Value != test.ExpectedLastLapTimeValue {
-			t.Errorf(`expected .Lines.LastLapTime.Value "%s", got: "%s"`,
-				test.ExpectedLastLapTimeValue, driver.LastLapTime.Value)
+		err = validateValues(driver.LastLapTime.Value, test.ExpectedLastLapTimeValue)
+		if err != nil {
+			t.Errorf(".Lines[%s].LastLapTime.Value -> %v", test.DriverNumber, err)
 		}
 
-		if driver.LastLapTime.Status == nil && test.ExpectedLastLapTimeStatus == nil {
-			// ok
-		} else if driver.LastLapTime.Status == nil && test.ExpectedLastLapTimeStatus != nil {
-			t.Errorf(`expected .Lines.LastLapTime.Status "%d", got: "%v"`,
-				*test.ExpectedLastLapTimeStatus, driver.LastLapTime.Status)
-		} else if driver.LastLapTime.Status != nil && test.ExpectedLastLapTimeStatus == nil {
-			t.Errorf(`expected .Lines.LastLapTime.Status "%v", got: "%d"`,
-				test.ExpectedLastLapTimeStatus, *driver.LastLapTime.Status)
-		} else if *driver.LastLapTime.Status != *test.ExpectedLastLapTimeStatus {
-			t.Errorf(`expected .Lines.LastLapTime.Status "%d", got: "%d"`,
-				*test.ExpectedLastLapTimeStatus, *driver.LastLapTime.Status)
+		err = validatePointers(driver.LastLapTime.Status, test.ExpectedLastLapTimeStatus)
+		if err != nil {
+			t.Errorf(".Lines[%s].LastLapTime.Status -> %v", test.DriverNumber, err)
 		}
 
-		if driver.LastLapTime.PersonalFastest == nil && test.ExpectedLastLapTimePersonalFastest == nil {
-			// ok
-		} else if driver.LastLapTime.PersonalFastest == nil && test.ExpectedLastLapTimePersonalFastest != nil {
-			t.Errorf(`expected .Lines.LastLapTime.PersonalFastest "%v", got: "%v"`,
-				*test.ExpectedLastLapTimePersonalFastest, driver.LastLapTime.PersonalFastest)
-		} else if driver.LastLapTime.PersonalFastest != nil && test.ExpectedLastLapTimePersonalFastest == nil {
-			t.Errorf(`expected .Lines.LastLapTime.PersonalFastest "%v", got: "%v"`,
-				test.ExpectedLastLapTimePersonalFastest, *driver.LastLapTime.PersonalFastest)
-		} else if *driver.LastLapTime.PersonalFastest != *test.ExpectedLastLapTimePersonalFastest {
-			t.Errorf(`expected .Lines.LastLapTime.PersonalFastest "%v", got: "%v"`,
-				*test.ExpectedLastLapTimePersonalFastest, *driver.LastLapTime.PersonalFastest)
+		err = validatePointers(driver.LastLapTime.PersonalFastest, test.ExpectedLastLapTimePersonalFastest)
+		if err != nil {
+			t.Errorf(".Lines[%s].LastLapTime.PersonalFastest -> %v", test.DriverNumber, err)
 		}
 
 	}

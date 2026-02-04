@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TODO: apply some refactor changes of TestParseTimingData here as well.
+// TODO: refactor test table
 func TestParseDriverList(t *testing.T) {
 
 	jsonInput := []byte(`{
@@ -53,23 +53,24 @@ func TestParseDriverList(t *testing.T) {
 
 		driver, exists := response.DriverList[test.DriverNumber]
 		if !exists {
-			t.Errorf("missing %s driver from map", test.DriverNumber)
+			t.Errorf("missing key on .DriverList: %s", test.DriverNumber)
 			continue
 		}
 
-		if driver.BroadcastName != test.ExpectedBroadcastName {
-			t.Errorf(`expected .BroadcastName "%s", got: "%s"`,
-				test.ExpectedBroadcastName, driver.BroadcastName)
+		err := validateValues(driver.BroadcastName, test.ExpectedBroadcastName)
+		if err != nil {
+			t.Errorf(".DriverList[%s].BroadcastName -> %v",
+				test.DriverNumber, err)
 		}
 
-		if driver.TeamColor != test.ExpectedTeamColor {
-			t.Errorf(`expected .TeamColor "%s", get: "%s"`,
-				test.ExpectedTeamColor, driver.TeamColor)
+		err = validateValues(driver.TeamColor, test.ExpectedTeamColor)
+		if err != nil {
+			t.Errorf(".DriverList[%s].TeamColor -> %v", test.DriverNumber, err)
 		}
 
-		if driver.Line != test.ExpectedPosition {
-			t.Errorf(`expected .Line "%d", got: "%d"`,
-				test.ExpectedPosition, driver.Line)
+		err = validateValues(driver.Line, test.ExpectedPosition)
+		if err != nil {
+			t.Errorf(".DriverList[%s].Line -> %v", test.DriverNumber, err)
 		}
 	}
 

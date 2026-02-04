@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TODO: apply some refactor changes of TestParseTimingData here as well.
+// TODO: refactor test table
 func TestParseSessionInfo(t *testing.T) {
 
 	jsonInput := []byte(`{
@@ -61,34 +61,34 @@ func TestParseSessionInfo(t *testing.T) {
 		ExpectedArchiveStatus:     "Generating",
 	}
 
-	if response.SessionInfo.Key != test.ExpectedSessionKey {
-		t.Errorf(`expected .Key "%d", got: "%d"`,
-			test.ExpectedSessionKey, response.SessionInfo.Key)
+	err := validateValues(response.SessionInfo.Key, test.ExpectedSessionKey)
+	if err != nil {
+		t.Errorf(".SessionInfo.Key -> %v", err)
 	}
 
-	if response.SessionInfo.Meeting.Key != test.ExpectedMeetingKey {
-		t.Errorf(`expected .Meeting.Key "%d", got: "%d"`,
-			test.ExpectedMeetingKey, response.SessionInfo.Meeting.Key)
+	err = validateValues(response.SessionInfo.Meeting.Key, test.ExpectedMeetingKey)
+	if err != nil {
+		t.Errorf(".SessionInfo.Meeting.Key -> %v", err)
 	}
 
-	if response.SessionInfo.Meeting.Circuit.Key != test.ExpectedMeetingCircuitKey {
-		t.Errorf(`expected .Meeting.Circuit.Key "%d", got "%d"`,
-			test.ExpectedMeetingCircuitKey, response.SessionInfo.Meeting.Circuit.Key)
+	err = validateValues(response.SessionInfo.Meeting.Circuit.Key, test.ExpectedMeetingCircuitKey)
+	if err != nil {
+		t.Errorf(".SessionInfo.Meeting.Circuit.Key -> %v", err)
 	}
 
-	if response.SessionInfo.Type != test.ExpectedSessionType {
-		t.Errorf(`expected .Type "%s", got: "%s"`,
-			test.ExpectedSessionType, response.SessionInfo.Type)
+	err = validateValues(response.SessionInfo.Type, test.ExpectedSessionType)
+	if err != nil {
+		t.Errorf(".SessionInfo.Type -> %v", err)
 	}
 
-	if response.SessionInfo.Meeting.Name != test.ExpectedMeetingName {
-		t.Errorf(`expected .Meeting.Name "%s", got: "%s"`,
-			test.ExpectedMeetingName, response.SessionInfo.Meeting.Name)
+	err = validateValues(response.SessionInfo.Meeting.Name, test.ExpectedMeetingName)
+	if err != nil {
+		t.Errorf(".SessionInfo.Meeting.Name -> %v", err)
 	}
 
-	if response.SessionInfo.ArchiveStatus.Status != test.ExpectedArchiveStatus {
-		t.Errorf(`expected .ArchiveStatus.Status "%s", got: "%s"`,
-			test.ExpectedArchiveStatus, response.SessionInfo.ArchiveStatus.Status)
+	err = validateValues(response.SessionInfo.ArchiveStatus.Status, test.ExpectedArchiveStatus)
+	if err != nil {
+		t.Errorf(".SessionInfo.ArchiveStatus.Status -> %v", err)
 	}
 
 }
