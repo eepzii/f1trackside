@@ -3,75 +3,92 @@ package types
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-// TODO: refactor test table
 func TestParseDriverList(t *testing.T) {
 
-	jsonInput := []byte(`{
-		"DriverList":{
-		    "4":{
-		        "RacingNumber":"4",
-		        "BroadcastName":"L NORRIS",
-		        "FullName":"Lando NORRIS",
-		        "Tla":"NOR",
-		        "Line":1,
-		        "TeamName":"McLaren",
-		        "TeamColour":"F47600",
-		        "FirstName":"Lando",
-		        "LastName":"Norris",
-		        "Reference":"LANNOR01",
-		        "HeadshotUrl":"https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
-		        "PublicIdRight":"common/f1/2025/mclaren/lannor01/2025mclarenlannor01right"
-			},
-		    "1":{
-		        "Line":2
-		    }
-		}
-	}`)
-
-	var response DriverListResponse
-	if err := json.Unmarshal(jsonInput, &response); err != nil {
-		t.Fatalf("failed to unmarshal json: %v", err)
-	}
-
-	if response.DriverList == nil {
-		t.Fatalf(".DriverList is nil")
-	}
-
 	tests := []struct {
-		DriverNumber          string
-		ExpectedBroadcastName string
-		ExpectedTeamColor     string
-		ExpectedPosition      int
+		name  string
+		input []byte
+		want  DriverListResponse
 	}{
-		{"4", "L NORRIS", "F47600", 1},
-		{"1", "", "", 2},
+		{
+			name: ".DriverList",
+			input: []byte(`{
+        		"DriverList":{
+        		    "4":{
+        		        "RacingNumber":"4",
+        		        "BroadcastName":"L NORRIS",
+        		        "FullName":"Lando NORRIS",
+        		        "Tla":"NOR",
+        		        "Line":1,
+        		        "TeamName":"McLaren",
+        		        "TeamColour":"F47600",
+        		        "FirstName":"Lando",
+        		        "LastName":"Norris",
+        		        "Reference":"LANNOR01",
+        		        "HeadshotUrl":"https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
+        		        "PublicIdRight":"common/f1/2025/mclaren/lannor01/2025mclarenlannor01right"
+        			}
+        		}
+        	}`),
+			want: DriverListResponse{
+				DriverList: map[string]Driver{
+					"4": {
+						RacingNumber:  "4",
+						BroadcastName: "L NORRIS",
+						FullName:      "Lando NORRIS",
+						Tla:           "NOR",
+						Line:          1,
+						TeamName:      "McLaren",
+						TeamColor:     "F47600",
+						FirstName:     "Lando",
+						LastName:      "Norris",
+						Reference:     "LANNOR01",
+						HeadshotUrl:   "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
+						PublicIdRight: "common/f1/2025/mclaren/lannor01/2025mclarenlannor01right",
+					},
+				},
+			},
+		},
+		{
+			name: "multiple .DriverList.Line value changes",
+			input: []byte(`{
+                "DriverList":{
+                    "30":{ "Line":9 },
+                    "16":{ "Line":8 }
+                }
+            }`),
+			want: DriverListResponse{
+				DriverList: map[string]Driver{
+					"30": {Line: 9},
+					"16": {Line: 8},
+				},
+			},
+		},
+		{
+			name:  "empty .DriverList",
+			input: []byte(`{"DriverList":{}}`),
+			want: DriverListResponse{
+				DriverList: map[string]Driver{},
+			},
+		},
 	}
 
 	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 
-		driver, exists := response.DriverList[test.DriverNumber]
-		if !exists {
-			t.Errorf("missing key on .DriverList: %s", test.DriverNumber)
-			continue
-		}
+			var got DriverListResponse
+			if err := json.Unmarshal(test.input, &got); err != nil {
+				t.Fatalf("failed to unmarshal json: %v", err)
+			}
 
-		err := validateValues(driver.BroadcastName, test.ExpectedBroadcastName)
-		if err != nil {
-			t.Errorf(".DriverList[%s].BroadcastName -> %v",
-				test.DriverNumber, err)
-		}
-
-		err = validateValues(driver.TeamColor, test.ExpectedTeamColor)
-		if err != nil {
-			t.Errorf(".DriverList[%s].TeamColor -> %v", test.DriverNumber, err)
-		}
-
-		err = validateValues(driver.Line, test.ExpectedPosition)
-		if err != nil {
-			t.Errorf(".DriverList[%s].Line -> %v", test.DriverNumber, err)
-		}
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("mismatch testing %s (-want +got):\n%s", test.name, diff)
+			}
+		})
 	}
 
 }
