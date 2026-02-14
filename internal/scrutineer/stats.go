@@ -1,0 +1,111 @@
+package scrutineer
+
+import (
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+)
+
+// TODO: add schema validation as well
+func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
+	v := reflect.ValueOf(responseTypeVal)
+
+	minimumTypeMap, ok := minimumType.(map[string]any)
+	if !ok {
+		return
+	}
+
+	if v.Kind() == reflect.Map {
+		iter := v.MapRange()
+
+		for iter.Next() {
+			key := iter.Key().String()
+			val := iter.Value()
+
+			if entry, exists := minimumTypeMap[key]; exists {
+				s.Analyze(entry, val.Interface())
+			}
+		}
+	} else if v.Kind() == reflect.Struct {
+		t := v.Type()
+
+		for i := range t.NumField() {
+			field := t.Field(i)
+			fieldVal := v.Field(i)
+
+			jsonTag := field.Tag.Get("json")
+			if jsonTag == "" || jsonTag == "-" {
+				continue
+			}
+			key := strings.Split(jsonTag, ",")[0]
+
+			if s.Children[key] == nil {
+				s.Children[key] = &TypeStats{
+					Name:     key,
+					Children: make(map[string]*TypeStats),
+				}
+			}
+			childStat := s.Children[key]
+
+			entry, exists := minimumTypeMap[key]
+
+			if fieldVal.Kind() != reflect.Struct && fieldVal.Kind() != reflect.Map {
+
+				if exists && isZero(fieldVal) {
+					childStat.UnsafeDefaultValue++
+				}
+			}
+
+			if exists {
+				childStat.Analyze(entry, fieldVal.Interface())
+			}
+
+		}
+	}
+
+}
+
+func (s *TypeStats) Tree() string {
+	var sb strings.Builder
+
+	fmt.Fprintf(&sb, "%s\n", s.Name)
+
+	s.buildTree(&sb, "")
+
+	return sb.String()
+}
+
+func (s *TypeStats) buildTree(sb *strings.Builder, prefix string) {
+	keys := make([]string, 0, len(s.Children))
+	for k := range s.Children {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for i, key := range keys {
+		child := s.Children[key]
+
+		isLast := i == len(keys)-1
+
+		connector := "├── "
+		if isLast {
+			connector = "└── "
+		}
+
+		childPrefix := prefix + "│   "
+		if isLast {
+			childPrefix = prefix + "    "
+		}
+
+		msg := "OK"
+		if child.UnsafeDefaultValue > 0 {
+			msg = fmt.Sprintf("FAIL: found %d explicit default values -> suggest pointer",
+				child.UnsafeDefaultValue)
+		}
+
+		fmt.Fprintf(sb, "%s%s%s  %s\n", prefix, connector, child.Name, msg)
+
+		child.buildTree(sb, childPrefix)
+	}
+}
