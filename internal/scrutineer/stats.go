@@ -11,8 +11,17 @@ import (
 func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 	v := reflect.ValueOf(responseTypeVal)
 
-	minimumTypeMap, ok := minimumType.(map[string]any)
-	if !ok {
+	var minimumTypeMap map[string]any
+
+	switch data := minimumType.(type) {
+	case map[string]any:
+		minimumTypeMap = data
+	case []any:
+		minimumTypeMap = make(map[string]any)
+		for i, val := range data {
+			minimumTypeMap[fmt.Sprintf("%d", i)] = val
+		}
+	default:
 		return
 	}
 
