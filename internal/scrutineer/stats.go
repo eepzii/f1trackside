@@ -3,6 +3,7 @@ package scrutineer
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -38,6 +39,7 @@ func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 		}
 	} else if v.Kind() == reflect.Struct {
 		t := v.Type()
+		usedKeys := []string{}
 
 		for i := range t.NumField() {
 			field := t.Field(i)
@@ -48,6 +50,7 @@ func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 				continue
 			}
 			key := strings.Split(jsonTag, ",")[0]
+			usedKeys = append(usedKeys, key)
 
 			if s.Children[key] == nil {
 				s.Children[key] = &TypeStats{
@@ -58,6 +61,9 @@ func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 			childStat := s.Children[key]
 
 			entry, exists := minimumTypeMap[key]
+			if !exists {
+				continue
+			}
 
 			if fieldVal.Kind() != reflect.Struct && fieldVal.Kind() != reflect.Map {
 
@@ -70,6 +76,16 @@ func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 				childStat.Analyze(entry, fieldVal.Interface())
 			}
 
+		}
+
+		for minimumKey := range minimumTypeMap {
+			if !slices.Contains(usedKeys, minimumKey) {
+				s.Children[minimumKey] = &TypeStats{
+					Name:      minimumKey,
+					IsMissing: true,
+					Children:  make(map[string]*TypeStats),
+				}
+			}
 		}
 	}
 
@@ -108,7 +124,9 @@ func (s *TypeStats) buildTree(sb *strings.Builder, prefix string) {
 		}
 
 		msg := "OK"
-		if child.UnsafeDefaultValue > 0 {
+		if child.IsMissing {
+			msg = "MISSING: field found in JSON data but not defined in Go struct"
+		} else if child.UnsafeDefaultValue > 0 {
 			msg = fmt.Sprintf("FAIL: found %d explicit default values -> suggest pointer",
 				child.UnsafeDefaultValue)
 		}

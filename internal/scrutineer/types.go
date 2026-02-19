@@ -12,6 +12,7 @@ type ScanConfig struct {
 
 type TypeStats struct {
 	Name               string
+	IsMissing          bool
 	UnsafeDefaultValue int
 	Children           map[string]*TypeStats
 }
