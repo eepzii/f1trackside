@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// TODO: add schema validation as well
 func (s *TypeStats) Analyze(minimumType any, responseTypeVal any) {
 	v := reflect.ValueOf(responseTypeVal)
 
