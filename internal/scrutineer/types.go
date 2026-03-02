@@ -1,18 +1,13 @@
 package scrutineer
 
-type Report struct {
-	Root *TypeStats
+import "github.com/eepzii/f1trackside/internal/scrutineer/schema"
+
+type Scrutineer struct {
+	Root *schema.Field
 }
 
-type ScanConfig struct {
+type YamlConfig struct {
 	Name     string   `yaml:"check"`
 	TypeName string   `yaml:"onType"`
 	Paths    []string `yaml:"withPaths"`
-}
-
-type TypeStats struct {
-	Name               string
-	IsMissing          bool
-	UnsafeDefaultValue int
-	Children           map[string]*TypeStats
 }

@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("could not read config: %v\n", err)
 	}
 
-	var configs []scrutineer.ScanConfig
+	var configs []scrutineer.YamlConfig
 	if err := yaml.Unmarshal(yamlData, &configs); err != nil {
 		log.Fatalf("unable to unmarshal %s contents: %v\n", *configPath, err)
 	}
@@ -37,21 +37,21 @@ func main() {
 	for _, config := range configs {
 		fmt.Printf("check: %s (on type: %s)\n", config.Name, config.TypeName)
 
-		report := scrutineer.NewReport(config.TypeName)
+		inspector := scrutineer.New(config.TypeName)
 
-		typeTemplate, exists := scrutineer.TYPE_REGISTRY[report.Root.Name]
+		typeTemplate, exists := scrutineer.TYPE_REGISTRY[inspector.Root.Name]
 		if !exists {
 			fmt.Printf("    unknown type %q -> skipping...\n", config.TypeName)
 			continue
 		}
 
 		for _, path := range config.Paths {
-			if err := scrutineer.StreamFile(path, report, typeTemplate); err != nil {
+			if err := inspector.InspectFile(path, typeTemplate); err != nil {
 				log.Printf("    error processing %s: %v\n", path, err)
 			}
 		}
 
-		fmt.Println(report.Show())
+		inspector.PrintTree()
 	}
 
 }
