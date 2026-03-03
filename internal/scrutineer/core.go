@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/eepzii/f1trackside/internal/scrutineer/schema"
@@ -40,8 +41,21 @@ func (s *Scrutineer) InspectFile(path string, template any) error {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	workers := runtime.NumCPU()
+	queue := make(chan []byte, 100)
+	results := make(chan *schema.Field, workers)
 
+	for range workers {
+		go func() {
+			worker := New(s.Root.Name)
+			for data := range queue {
+				worker.readLine(data, template)
+			}
+			results <- worker.Root
+		}()
+	}
+
+	scanner := bufio.NewScanner(file)
 	buf := make([]byte, 1024*1024)
 	scanner.Buffer(buf, cap(buf))
 
@@ -59,7 +73,19 @@ func (s *Scrutineer) InspectFile(path string, template any) error {
 			continue
 		}
 
-		s.readLine(line[startIndex:], template)
+		// make copy of []byte otherwise the workers will overwrite each other's data
+		// due to the nature of scanner.Bytes() which reuses the same memory array for every line
+		data := make([]byte, len(line)-startIndex)
+		copy(data, line[startIndex:])
+
+		queue <- data
+	}
+
+	close(queue)
+
+	for range workers {
+		fieldRoot := <-results
+		s.Root.Merge(fieldRoot)
 	}
 
 	return scanner.Err()

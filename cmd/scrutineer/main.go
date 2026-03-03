@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/goccy/go-yaml"
 
@@ -34,24 +35,59 @@ func main() {
 	fmt.Println("========================")
 	fmt.Println()
 
-	for _, config := range configs {
-		fmt.Printf("check: %s (on type: %s)\n", config.Name, config.TypeName)
+	var configWg sync.WaitGroup
+	var printMu sync.Mutex
 
-		inspector := scrutineer.New(config.TypeName)
-
-		typeTemplate, exists := scrutineer.TYPE_REGISTRY[inspector.Root.Name]
-		if !exists {
-			fmt.Printf("    unknown type %q -> skipping...\n", config.TypeName)
-			continue
+	for i, config := range configs {
+		fmt.Printf("checking %s\n", config.TypeName)
+		if i == len(configs)-1 {
+			fmt.Println()
+			fmt.Println("========================")
+			fmt.Println()
 		}
 
-		for _, path := range config.Paths {
-			if err := inspector.InspectFile(path, typeTemplate); err != nil {
-				log.Printf("    error processing %s: %v\n", path, err)
+		configWg.Go(func() {
+			inspector := scrutineer.New(config.TypeName)
+			results := make(chan *scrutineer.Scrutineer, len(config.Paths))
+
+			typeTemplate, exists := scrutineer.TYPE_REGISTRY[inspector.Root.Name]
+			if !exists {
+				printMu.Lock()
+				fmt.Printf("    unknown type %q -> skipping...\n", config.TypeName)
+				printMu.Unlock()
+				return
 			}
-		}
 
-		inspector.PrintTree()
+			go func() {
+				defer close(results)
+				var fileWg sync.WaitGroup
+
+				for _, path := range config.Paths {
+					fileWg.Go(func() {
+						tmpInspector := scrutineer.New(config.TypeName)
+
+						if err := tmpInspector.InspectFile(path, typeTemplate); err != nil {
+							printMu.Lock()
+							fmt.Printf("    error processing %s: %v\n", path, err)
+							printMu.Unlock()
+						}
+
+						results <- tmpInspector
+					})
+				}
+
+				fileWg.Wait()
+			}()
+
+			for inspectedFile := range results {
+				inspector.Root.Merge(inspectedFile.Root)
+			}
+
+			printMu.Lock()
+			inspector.PrintTree()
+			printMu.Unlock()
+		})
 	}
 
+	configWg.Wait()
 }
