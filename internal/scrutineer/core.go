@@ -34,16 +34,20 @@ func (s *Scrutineer) PrintTree() {
 	fmt.Println(sb.String())
 }
 
-func (s *Scrutineer) InspectFile(path string, template any) error {
+func (s *Scrutineer) InspectFile(path string, template any, useConcurrency bool) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("could not open file: %w", err)
 	}
 	defer file.Close()
 
-	workers := runtime.NumCPU()
+	workers := 1
 	queue := make(chan []byte, 100)
 	results := make(chan *schema.Field, workers)
+
+	if useConcurrency {
+		workers = runtime.NumCPU()
+	}
 
 	for range workers {
 		go func() {
