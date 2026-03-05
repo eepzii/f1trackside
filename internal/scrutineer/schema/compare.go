@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
@@ -55,6 +56,7 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 				f.Children[key] = &Field{
 					Name:     key,
 					Children: make(map[string]*Field),
+					Errors:   make(map[string]int),
 				}
 			}
 			childStat := f.Children[key]
@@ -74,14 +76,24 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			}
 
 			if fieldVal.Kind() != reflect.Struct && fieldVal.Kind() != reflect.Map {
+				// figure out if it is a json.Number because they appear as a string type,
+				// which is bad for checking the zero value later since a 0 would appear as "0"
+				if num, isNum := entry.(json.Number); isNum {
+					// we parse it as a float64 because every number can safely be parsed as float64
+					// this will have no effect on type checking since here we are only interested in the value
+					if parsedFloat, err := num.Float64(); err != nil {
+						childStat.Errors[err.Error()]++
+					} else {
+						entry = parsedFloat
+					}
+				}
+
 				if isZero(reflect.ValueOf(entry)) && field.Type.Kind() != reflect.Pointer {
 					childStat.unsafeDefaultValue++
 				}
 			}
 
-			if exists {
-				childStat.Compare(entry, fieldVal.Interface())
-			}
+			childStat.Compare(entry, fieldVal.Interface())
 		}
 
 		f.evalOrAddAsMissing(usedKeys, minimumTypeMap)
