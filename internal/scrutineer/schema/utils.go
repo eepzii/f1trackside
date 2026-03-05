@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -25,12 +26,12 @@ func suggestType(t any) (string, error) {
 	case bool:
 		suggestType = "bool"
 	case json.Number:
-		if _, err := val.Int64(); err == nil {
+		if _, parseErr := val.Int64(); parseErr == nil {
 			suggestType = "int"
-		} else if _, err := val.Float64(); err == nil {
+		} else if _, parseErr := val.Float64(); parseErr == nil {
 			suggestType = "float64"
 		} else {
-			err = fmt.Errorf("json.Number (unknown numeric)")
+			err = errors.New("json.Number (unknown numeric)")
 		}
 	case map[string]any:
 		suggestType = "struct"
