@@ -94,7 +94,7 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			childStat.Compare(entry, fieldVal.Interface())
 		}
 
-		f.evalOrAddAsMissing(usedKeys, minimumTypeMap)
+		f.checkMissingFields(usedKeys, minimumTypeMap)
 	default:
 		return
 	}

@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-func (f *Field) evalOrAddAsMissing(usedFields []string, minimumTypeMap map[string]any) {
+func (f *Field) checkMissingFields(usedFields []string, minimumTypeMap map[string]any) {
 	for minimumKey := range minimumTypeMap {
 		if !slices.Contains(usedFields, minimumKey) {
 			suggestedType, err := suggestType(minimumTypeMap[minimumKey])
