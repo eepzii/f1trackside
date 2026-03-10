@@ -45,3 +45,14 @@ func suggestType(t any) (string, error) {
 
 	return suggestType, err
 }
+
+func normalizeJSONNumber(val any) (any, error) {
+	// figure out if it is a json.Number because they appear as a string type,
+	// which is bad for checking the zero value later since a 0 would appear as "0"
+	if num, isNum := val.(json.Number); isNum {
+		// we parse it as a float64 because every number can safely be parsed as float64
+		// this will have no effect on type checking since here we are only interested in the value
+		return num.Float64()
+	}
+	return val, nil
+}
