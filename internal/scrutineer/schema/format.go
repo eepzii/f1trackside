@@ -34,6 +34,9 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 		fmt.Fprintf(sb, "%s%s%s  %s\n",
 			prefix, connector, child.Name, msg)
 
+		if slices.Contains(child.observedTypes, "[]any") && len(child.observedTypes) == 1 {
+			continue
+		}
 		child.WriteTree(sb, childPrefix)
 	}
 }
@@ -72,8 +75,34 @@ func (f *Field) buildMessage(indent string) string {
 		msg = fmt.Sprintf("MISSING: field found in JSON data but not defined in Go struct -> suggest adding as %s",
 			suggestedTypes)
 	} else if len(f.Errors) > 0 {
-		msg = fmt.Sprintf("TYPE ERROR: suggest %s%s",
-			suggestedTypes, typeErrors.String())
+		var arrayTypes strings.Builder
+		var foundTypes []string
+		if slices.Contains(f.observedTypes, "[]any") && len(f.observedTypes) == 1 {
+			for _, child := range f.Children {
+				for _, observedType := range child.observedTypes {
+					if !slices.Contains(foundTypes, observedType) {
+						foundTypes = append(foundTypes, observedType)
+					}
+				}
+			}
+			var types strings.Builder
+			for i, t := range foundTypes {
+				if i == 0 {
+					fmt.Fprint(&types, t)
+					continue
+				}
+				fmt.Fprintf(&types, ", %s", t)
+			}
+			fmt.Fprintf(&arrayTypes, "\n%sArray has item(s) with types of: \"%s\"", indent, types.String())
+			if len(foundTypes) == 1 {
+				fmt.Fprintf(&arrayTypes, "\n%s=> consider using []%s instead of suggested []any", indent, foundTypes[0])
+			}
+
+			typeErrors = strings.Builder{}
+		}
+
+		msg = fmt.Sprintf("TYPE ERROR: suggest %s%s%s",
+			suggestedTypes, typeErrors.String(), arrayTypes.String())
 	}
 
 	return msg

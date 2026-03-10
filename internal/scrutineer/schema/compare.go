@@ -26,6 +26,13 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 	}
 
 	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		t := v.Type().Elem()
+		template := reflect.New(t).Elem().Interface()
+
+		for _, entry := range minimumTypeMap {
+			f.Compare(entry, template)
+		}
 	case reflect.Map:
 		iter := v.MapRange()
 
