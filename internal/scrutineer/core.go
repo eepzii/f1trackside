@@ -114,8 +114,13 @@ func (s *Scrutineer) readLine(data []byte, responseTypeTemplate any) {
 			path := strings.Split(typeErr.Field, ".")
 			node := s.Root.AddByPath(path)
 
-			msg := fmt.Sprintf("JSON sent %s, struct has %s",
-				typeErr.Value, typeErr.Type)
+			var numericTypeHint string
+			if typeErr.Value == "number" {
+				numericTypeHint = " (try \"int\" first)"
+			}
+
+			msg := fmt.Sprintf("want: %s%s, got: %s",
+				typeErr.Value, numericTypeHint, typeErr.Type)
 
 			if node.Errors == nil {
 				node.Errors = make(map[string]int)
