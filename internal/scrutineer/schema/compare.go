@@ -11,6 +11,14 @@ import (
 func (f *Field) Compare(minimumType any, responseTypeVal any) {
 	v := reflect.ValueOf(responseTypeVal)
 
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			v = reflect.New(v.Type().Elem()).Elem()
+			continue
+		}
+		v = v.Elem()
+	}
+
 	var minimumTypeMap map[string]any
 
 	switch data := minimumType.(type) {
