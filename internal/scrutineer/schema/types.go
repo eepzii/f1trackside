@@ -8,5 +8,5 @@ type Field struct {
 	isMissing          bool
 	total              int
 	unsafeDefaultValue int
-	observedTypes      []string
+	observedTypes      []DataType
 }

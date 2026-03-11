@@ -2,8 +2,6 @@ package schema
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"reflect"
 )
 
@@ -16,34 +14,33 @@ func isZero(v reflect.Value) bool {
 	}
 }
 
-func suggestType(t any) (string, error) {
-	var suggestType string
-	var err error
+func suggestType(t any) DataType {
+	var suggestType DataType
 
 	switch val := t.(type) {
 	case string:
-		suggestType = "string"
+		suggestType = String
 	case bool:
-		suggestType = "bool"
+		suggestType = Bool
 	case json.Number:
 		if _, parseErr := val.Int64(); parseErr == nil {
-			suggestType = "int"
+			suggestType = Int
 		} else if _, parseErr := val.Float64(); parseErr == nil {
-			suggestType = "float64"
+			suggestType = Float64
 		} else {
-			err = errors.New("json.Number (unknown numeric)")
+			suggestType = UnknownNumeric
 		}
 	case map[string]any:
-		suggestType = "struct"
+		suggestType = Struct
 	case []any:
-		suggestType = "[]any"
+		suggestType = Slice
 	case nil:
-		suggestType = "any (nil value)"
+		suggestType = Any
 	default:
-		err = fmt.Errorf("unknown type: %v", t)
+		suggestType = Unknown
 	}
 
-	return suggestType, err
+	return suggestType
 }
 
 func normalizeJSONNumber(val any) (any, error) {

@@ -34,7 +34,7 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 		fmt.Fprintf(sb, "%s%s%s  %s\n",
 			prefix, connector, child.Name, msg)
 
-		if slices.Contains(child.observedTypes, "[]any") && len(child.observedTypes) == 1 {
+		if slices.Contains(child.observedTypes, Slice) && len(child.observedTypes) == 1 {
 			continue
 		}
 		child.WriteTree(sb, childPrefix)
@@ -49,10 +49,10 @@ func (f *Field) buildMessage(indent string) string {
 
 	var msg = "OK"
 
-	var suggestedTypes string
+	var suggestedTypes DataType
 	for _, t := range f.observedTypes {
 		if suggestedTypes != "" {
-			suggestedTypes += fmt.Sprintf(", %s", t)
+			suggestedTypes += DataType(fmt.Sprintf(", %s", t))
 			continue
 		}
 		suggestedTypes += t
@@ -65,10 +65,10 @@ func (f *Field) buildMessage(indent string) string {
 		}
 	}
 
-	if slices.Contains(f.observedTypes, "struct") &&
-		slices.Contains(f.observedTypes, "[]any") &&
+	if slices.Contains(f.observedTypes, Struct) &&
+		slices.Contains(f.observedTypes, Slice) &&
 		(len(f.observedTypes) == 2 || len(f.Errors) == 2) {
-		suggestedTypes = fmt.Sprintf("dynamic JSON array (%s)", suggestedTypes)
+		suggestedTypes = DataType(fmt.Sprintf("dynamic JSON array (%s)", suggestedTypes))
 	}
 
 	if f.isMissing {
@@ -76,8 +76,8 @@ func (f *Field) buildMessage(indent string) string {
 			suggestedTypes)
 	} else if len(f.Errors) > 0 {
 		var arrayTypes strings.Builder
-		var foundTypes []string
-		if slices.Contains(f.observedTypes, "[]any") && len(f.observedTypes) == 1 {
+		var foundTypes []DataType
+		if slices.Contains(f.observedTypes, Slice) && len(f.observedTypes) == 1 {
 			for _, child := range f.Children {
 				for _, observedType := range child.observedTypes {
 					if !slices.Contains(foundTypes, observedType) {

@@ -82,7 +82,7 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			childStat.total++
 
 			if len(childStat.Errors) > 0 {
-				t, _ := suggestType(entry)
+				t := suggestType(entry)
 
 				if !slices.Contains(childStat.observedTypes, t) {
 					childStat.observedTypes = append(childStat.observedTypes, t)

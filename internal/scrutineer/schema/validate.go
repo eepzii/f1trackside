@@ -8,10 +8,7 @@ import (
 func (f *Field) checkMissingFields(usedFields []string, minimumTypeMap map[string]any) {
 	for minimumKey := range minimumTypeMap {
 		if !slices.Contains(usedFields, minimumKey) {
-			suggestedType, err := suggestType(minimumTypeMap[minimumKey])
-			if err != nil {
-				suggestedType = "UNKNOWN"
-			}
+			suggestedType := suggestType(minimumTypeMap[minimumKey])
 
 			if f.Children[minimumKey] == nil {
 				f.Children[minimumKey] = &Field{
