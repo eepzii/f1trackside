@@ -33,9 +33,17 @@ func (f *Field) checkMissingFields(usedFields []string, minimumTypeMap map[strin
 }
 
 func (f *Field) checkUnsafeDefaults(fieldType reflect.Type, fieldVal reflect.Value, entry any) {
+	if fieldType.Kind() == reflect.Struct && fieldType.NumField() == 0 {
+		return
+	}
+
 	var entryVal = reflect.ValueOf(entry)
 
 	if entryVal.Kind() == reflect.Slice || entryVal.Kind() == reflect.Array {
+		if fieldType.Kind() != reflect.Slice && fieldType.Kind() != reflect.Array {
+			return
+		}
+
 		elemKind := fieldType.Elem().Kind()
 
 		if elemKind == reflect.Struct || elemKind == reflect.Map {
