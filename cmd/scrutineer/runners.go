@@ -13,7 +13,7 @@ func runSynchronous(configs []scrutineer.YamlConfig) {
 		fmt.Printf("checking %s\n", config.TypeName)
 
 		inspector := scrutineer.New(config.TypeName)
-		typeTemplate, exists := scrutineer.TYPE_REGISTRY[inspector.Root.Name]
+		typeTemplate, exists := scrutineer.TypeRegistry[inspector.Root.Name]
 		if !exists {
 			fmt.Printf("    unknown type %q -> skipping...\n", config.TypeName)
 			continue
@@ -45,7 +45,7 @@ func runConcurrent(configs []scrutineer.YamlConfig) {
 			inspector := scrutineer.New(config.TypeName)
 			results := make(chan *scrutineer.Scrutineer, len(config.Paths))
 
-			typeTemplate, exists := scrutineer.TYPE_REGISTRY[inspector.Root.Name]
+			typeTemplate, exists := scrutineer.TypeRegistry[inspector.Root.Name]
 			if !exists {
 				printMu.Lock()
 				fmt.Printf("    unknown type %q -> skipping...\n", config.TypeName)

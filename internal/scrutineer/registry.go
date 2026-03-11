@@ -2,7 +2,7 @@ package scrutineer
 
 import "github.com/eepzii/f1trackside/internal/types"
 
-var TYPE_REGISTRY = map[string]any{
+var TypeRegistry = map[string]any{
 	"DriverList":    map[string]types.Driver{},
 	"Heartbeat":     types.Heartbeat{},
 	"LapCount":      types.LapCount{},
