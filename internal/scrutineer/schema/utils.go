@@ -31,7 +31,7 @@ func suggestType(t any) DataType {
 			suggestType = UnknownNumeric
 		}
 	case map[string]any:
-		suggestType = Struct
+		suggestType = Object
 	case []any:
 		suggestType = Slice
 	case nil:

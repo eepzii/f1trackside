@@ -65,7 +65,7 @@ func (f *Field) buildMessage(indent string) string {
 		}
 	}
 
-	if slices.Contains(f.observedTypes, Struct) &&
+	if slices.Contains(f.observedTypes, Object) &&
 		slices.Contains(f.observedTypes, Slice) &&
 		(len(f.observedTypes) == 2 || len(f.Errors) == 2) {
 		suggestedTypes = DataType(fmt.Sprintf("dynamic JSON array (%s)", suggestedTypes))
