@@ -31,6 +31,7 @@ func (f *Field) checkMissingFields(usedFields []string, minimumTypeMap map[strin
 
 func (f *Field) checkUnsafeDefaults(fieldType reflect.Type, fieldVal reflect.Value, entry any) {
 	if fieldType.Kind() == reflect.Struct && fieldType.NumField() == 0 {
+		f.Errors["empty struct"]++
 		return
 	}
 
