@@ -37,17 +37,27 @@ func (f *Field) checkUnsafeDefaults(fieldType reflect.Type, fieldVal reflect.Val
 	var entryVal = reflect.ValueOf(entry)
 
 	if entryVal.Kind() == reflect.Slice || entryVal.Kind() == reflect.Array {
-		if fieldType.Kind() != reflect.Slice && fieldType.Kind() != reflect.Array {
-			return
-		}
-
-		elemKind := fieldType.Elem().Kind()
-
-		if elemKind == reflect.Struct || elemKind == reflect.Map {
+		if fieldType.Kind() != reflect.Slice && fieldType.Kind() != reflect.Array && fieldType.Kind() != reflect.Map {
 			return
 		}
 
 		for _, elem := range entry.([]any) {
+			checkVal, err := normalizeJSONNumber(elem)
+			if err != nil {
+				f.Errors[err.Error()]++
+				continue
+			}
+
+			if isZero(reflect.ValueOf(checkVal)) && fieldType.Elem().Kind() != reflect.Pointer {
+				f.unsafeDefaultValue++
+			}
+		}
+	} else if entryVal.Kind() == reflect.Map {
+		if fieldType.Kind() != reflect.Map {
+			return
+		}
+
+		for _, elem := range entry.(map[string]any) {
 			checkVal, err := normalizeJSONNumber(elem)
 			if err != nil {
 				f.Errors[err.Error()]++
