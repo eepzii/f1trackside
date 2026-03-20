@@ -85,6 +85,11 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			if !slices.Contains(childStat.observedTypes, t) {
 				childStat.observedTypes = append(childStat.observedTypes, t)
 			}
+			valType := suggestType(fieldVal.Interface())
+			if valType != Unknown && valType != t {
+				msg := fmt.Sprintf("want: %s, got: %s", t, valType)
+				childStat.Errors[msg]++
+			}
 
 			childStat.checkUnsafeDefaults(field.Type, fieldVal, entry)
 

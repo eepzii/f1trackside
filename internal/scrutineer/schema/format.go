@@ -42,11 +42,6 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 }
 
 func (f *Field) buildMessage(indent string) string {
-	if f.unsafeDefaultValue > 0 {
-		return fmt.Sprintf("FAIL: found %d explicit default values -> suggest pointer",
-			f.unsafeDefaultValue)
-	}
-
 	var msg = "OK"
 
 	var suggestedTypes DataType
@@ -103,6 +98,9 @@ func (f *Field) buildMessage(indent string) string {
 
 		msg = fmt.Sprintf("TYPE ERROR: suggest %s%s%s",
 			suggestedTypes, typeErrors.String(), arrayTypes.String())
+	} else if f.unsafeDefaultValue > 0 {
+		return fmt.Sprintf("FAIL: found %d explicit default values -> suggest pointer",
+			f.unsafeDefaultValue)
 	}
 
 	return msg
