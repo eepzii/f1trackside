@@ -28,8 +28,11 @@ func (s *Scrutineer) PrintTree() {
 	var sb strings.Builder
 
 	fmt.Fprintf(&sb, "%s\n", s.Root.Name)
-
-	s.Root.WriteTree(&sb, "")
+	if s.HasSyntaxError {
+		fmt.Fprint(&sb, "  -> bad json syntax")
+	} else {
+		s.Root.WriteTree(&sb, "")
+	}
 
 	fmt.Println(sb.String())
 }
@@ -43,7 +46,7 @@ func (s *Scrutineer) InspectFile(path string, template any, useConcurrency bool)
 
 	workers := 1
 	queue := make(chan []byte, 100)
-	results := make(chan *schema.Field, workers)
+	results := make(chan *Scrutineer, workers)
 
 	if useConcurrency {
 		workers = runtime.NumCPU()
@@ -55,7 +58,7 @@ func (s *Scrutineer) InspectFile(path string, template any, useConcurrency bool)
 			for data := range queue {
 				worker.readLine(data, template)
 			}
-			results <- worker.Root
+			results <- worker
 		}()
 	}
 
@@ -88,8 +91,11 @@ func (s *Scrutineer) InspectFile(path string, template any, useConcurrency bool)
 	close(queue)
 
 	for range workers {
-		fieldRoot := <-results
-		s.Root.Merge(fieldRoot)
+		ss := <-results
+		s.Root.Merge(ss.Root)
+		if ss.HasSyntaxError {
+			s.HasSyntaxError = true
+		}
 	}
 
 	return scanner.Err()
@@ -102,6 +108,7 @@ func (s *Scrutineer) readLine(data []byte, responseTypeTemplate any) {
 
 	if err := decoder.Decode(&minimumJSON); err != nil {
 		// return on syntax error relating to the JSON input
+		s.HasSyntaxError = true
 		return
 	}
 

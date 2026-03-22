@@ -76,6 +76,9 @@ func runConcurrent(configs []scrutineer.YamlConfig) {
 
 			for inspectedFile := range results {
 				inspector.Root.Merge(inspectedFile.Root)
+				if inspectedFile.HasSyntaxError {
+					inspector.HasSyntaxError = true
+				}
 			}
 
 			printMu.Lock()

@@ -3,7 +3,8 @@ package scrutineer
 import "github.com/eepzii/f1trackside/internal/scrutineer/schema"
 
 type Scrutineer struct {
-	Root *schema.Field
+	Root           *schema.Field
+	HasSyntaxError bool
 }
 
 type YamlConfig struct {
