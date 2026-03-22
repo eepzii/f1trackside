@@ -57,6 +57,9 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 		t := v.Type()
 		for i := range t.NumField() {
 			field := t.Field(i)
+			if !field.IsExported() {
+				continue
+			}
 			fieldVal := v.Field(i)
 
 			jsonTag := field.Tag.Get("json")
