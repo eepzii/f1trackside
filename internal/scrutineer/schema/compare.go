@@ -84,11 +84,11 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			}
 			childStat.total++
 
-			t := suggestType(entry)
+			t := suggestJSONType(entry)
 			if !slices.Contains(childStat.observedTypes, t) {
 				childStat.observedTypes = append(childStat.observedTypes, t)
 			}
-			valType := suggestType(fieldVal.Interface())
+			valType := suggestJSONType(fieldVal.Interface())
 			if valType != Unknown && valType != t {
 				msg := fmt.Sprintf("want: %s, got: %s", t, valType)
 				childStat.Errors[msg]++

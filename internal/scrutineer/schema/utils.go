@@ -14,7 +14,7 @@ func isZero(v reflect.Value) bool {
 	}
 }
 
-func suggestType(t any) DataType {
+func suggestJSONType(t any) DataType {
 	var suggestType DataType
 
 	switch val := t.(type) {
