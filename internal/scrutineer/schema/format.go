@@ -57,7 +57,8 @@ func (f *Field) buildMessage(indent string) string {
 	if len(f.Errors) > 0 {
 		for err := range f.Errors {
 			if err == "empty struct" {
-				continue
+				typeErrors = strings.Builder{}
+				break
 			}
 			fmt.Fprintf(&typeErrors, "\n%s%s", indent, err)
 		}
