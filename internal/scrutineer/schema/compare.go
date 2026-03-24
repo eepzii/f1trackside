@@ -29,6 +29,16 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			minimumTypeMap[fmt.Sprintf("%d", i)] = val
 		}
 	default:
+		jsonType := suggestJSONType(data)
+		goType := suggestGoType(v)
+
+		if goType != Any && goType != Unknown && goType != jsonType {
+			msg := fmt.Sprintf("want: %s, got: %s", jsonType, v.Type().String())
+			if f.Errors == nil {
+				f.Errors = make(map[string]int)
+			}
+			f.Errors[msg]++
+		}
 		return
 	}
 
@@ -41,15 +51,11 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			f.Compare(entry, template)
 		}
 	case reflect.Map:
-		iter := v.MapRange()
+		t := v.Type().Elem()
+		template := reflect.New(t).Elem().Interface()
 
-		for iter.Next() {
-			key := iter.Key().String()
-			val := iter.Value()
-
-			if entry, exists := minimumTypeMap[key]; exists {
-				f.Compare(entry, val.Interface())
-			}
+		for _, entry := range minimumTypeMap {
+			f.Compare(entry, template)
 		}
 	case reflect.Struct:
 		var usedKeys []string
@@ -84,13 +90,16 @@ func (f *Field) Compare(minimumType any, responseTypeVal any) {
 			}
 			childStat.total++
 
-			t := suggestJSONType(entry)
-			if !slices.Contains(childStat.observedTypes, t) {
-				childStat.observedTypes = append(childStat.observedTypes, t)
+			jsonType := suggestJSONType(entry)
+			if !slices.Contains(childStat.observedTypes, jsonType) {
+				childStat.observedTypes = append(childStat.observedTypes, jsonType)
 			}
-			valType := suggestJSONType(fieldVal.Interface())
-			if valType != Unknown && valType != t {
-				msg := fmt.Sprintf("want: %s, got: %s", t, valType)
+
+			goType := suggestGoType(fieldVal)
+
+			isDynamicArray := jsonType == Slice && goType == Object
+			if goType != Any && goType != Unknown && goType != jsonType && !isDynamicArray {
+				msg := fmt.Sprintf("want: %s, got: %s", jsonType, fieldVal.Type().String())
 				childStat.Errors[msg]++
 			}
 

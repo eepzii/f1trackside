@@ -43,6 +43,39 @@ func suggestJSONType(t any) DataType {
 	return suggestType
 }
 
+func suggestGoType(val reflect.Value) DataType {
+	for val.Kind() == reflect.Pointer {
+		if val.IsNil() {
+			return Any
+		}
+		val = val.Elem()
+	}
+
+	var suggestType DataType
+
+	switch val.Kind() {
+	case reflect.String:
+		suggestType = String
+	case reflect.Bool:
+		suggestType = Bool
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		suggestType = Int
+	case reflect.Float32, reflect.Float64:
+		suggestType = Float64
+	case reflect.Map, reflect.Struct:
+		suggestType = Object
+	case reflect.Slice, reflect.Array:
+		suggestType = Slice
+	case reflect.Interface:
+		suggestType = Any
+	default:
+		suggestType = Unknown
+	}
+
+	return suggestType
+}
+
 func normalizeJSONNumber(val any) (any, error) {
 	// figure out if it is a json.Number because they appear as a string type,
 	// which is bad for checking the zero value later since a 0 would appear as "0"
