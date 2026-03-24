@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -115,26 +114,8 @@ func (s *Scrutineer) readLine(data []byte, responseTypeTemplate any) {
 	responseType := reflect.TypeOf(responseTypeTemplate)
 	responseVal := reflect.New(responseType)
 
-	if err := json.Unmarshal(data, responseVal.Interface()); err != nil {
-		var typeErr *json.UnmarshalTypeError
-		if errors.As(err, &typeErr) {
-			path := strings.Split(typeErr.Field, ".")
-			node := s.Root.AddByPath(path)
-
-			var numericTypeHint string
-			if typeErr.Value == "number" {
-				numericTypeHint = " (try \"int\" first)"
-			}
-
-			msg := fmt.Sprintf("want: %s%s, got: %s",
-				typeErr.Value, numericTypeHint, typeErr.Type)
-
-			if node.Errors == nil {
-				node.Errors = make(map[string]int)
-			}
-			node.Errors[msg]++
-		}
-	}
+	// we don't check for an error since .Compare handles all the mismatches
+	json.Unmarshal(data, responseVal.Interface())
 
 	s.Root.Compare(minimumJSON, responseVal.Elem().Interface())
 }
