@@ -31,8 +31,10 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 
 		msg := child.buildMessage(childPrefix)
 
-		fmt.Fprintf(sb, "%s%s%s  %s\n",
-			prefix, connector, child.Name, msg)
+		leftSide := fmt.Sprintf("%s%s%s", prefix, connector, child.Name)
+
+		fmt.Fprintf(sb, "%-40s  %s\n",
+			leftSide, msg)
 
 		if slices.Contains(child.observedTypes, Slice) && len(child.observedTypes) == 1 {
 			continue
@@ -43,10 +45,10 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 
 func (f *Field) buildMessage(indent string) string {
 	if f.total == 0 {
-		return "UNUSED: defined in Go struct but not found in JSON"
+		return "[- UNUSED]    defined in Go struct but not found in JSON"
 	}
 
-	var msg = "OK"
+	var msg = "[✓ OK]"
 
 	var suggestedTypes DataType
 	for _, t := range f.observedTypes {
@@ -64,7 +66,7 @@ func (f *Field) buildMessage(indent string) string {
 				typeErrors = strings.Builder{}
 				break
 			}
-			fmt.Fprintf(&typeErrors, "\n%s%s", indent, err)
+			fmt.Fprintf(&typeErrors, "\n%s  ↳ %s", indent, err)
 		}
 	}
 
@@ -75,11 +77,12 @@ func (f *Field) buildMessage(indent string) string {
 	}
 
 	if f.isMissing {
-		msg = fmt.Sprintf("MISSING: field found in JSON data but not defined in Go struct -> suggest adding as %s",
+		msg = fmt.Sprintf("[+ MISSING]   -> suggest %s",
 			suggestedTypes)
 	} else if len(f.Errors) > 0 {
 		var arrayTypes strings.Builder
 		var foundTypes []DataType
+
 		if slices.Contains(f.observedTypes, Slice) && len(f.observedTypes) == 1 {
 			for _, child := range f.Children {
 				for _, observedType := range child.observedTypes {
@@ -88,6 +91,7 @@ func (f *Field) buildMessage(indent string) string {
 					}
 				}
 			}
+
 			var types strings.Builder
 			for i, t := range foundTypes {
 				if i == 0 {
@@ -96,19 +100,28 @@ func (f *Field) buildMessage(indent string) string {
 				}
 				fmt.Fprintf(&types, ", %s", t)
 			}
-			fmt.Fprintf(&arrayTypes, "\n%sArray has item(s) with types of: \"%s\"", indent, types.String())
+
+			if types.String() != "" {
+				fmt.Fprintf(&arrayTypes, "\n%s  ↳ array has item(s) with types of: \"%s\"", indent, types.String())
+			}
+
 			if len(foundTypes) == 1 {
-				fmt.Fprintf(&arrayTypes, "\n%s=> consider using []%s instead of suggested []any", indent, foundTypes[0])
+				fmt.Fprintf(&arrayTypes, "\n%s  ↳ => consider []%s instead of []any", indent, foundTypes[0])
 			}
 
 			typeErrors = strings.Builder{}
 		}
 
-		msg = fmt.Sprintf("TYPE ERROR: suggest %s%s%s",
+		msg = fmt.Sprintf("[? CONFLICT]  -> suggest %s%s%s",
 			suggestedTypes, typeErrors.String(), arrayTypes.String())
 	} else if f.unsafeDefaultValue > 0 {
-		return fmt.Sprintf("FAIL: found %d explicit default values -> suggest pointer",
-			f.unsafeDefaultValue)
+		if slices.Contains(f.observedTypes, Slice) {
+			msg = fmt.Sprintf("[! POINTER]   (%d defaults) -> []*any",
+				f.unsafeDefaultValue)
+		} else {
+			msg = fmt.Sprintf("[! POINTER]   (%d defaults) -> *%s",
+				f.unsafeDefaultValue, f.observedTypes[0])
+		}
 	}
 
 	return msg
