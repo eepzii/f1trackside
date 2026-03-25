@@ -42,6 +42,10 @@ func (f *Field) WriteTree(sb *strings.Builder, prefix string) {
 }
 
 func (f *Field) buildMessage(indent string) string {
+	if f.total == 0 {
+		return "UNUSED: defined in Go struct but not found in JSON"
+	}
+
 	var msg = "OK"
 
 	var suggestedTypes DataType
