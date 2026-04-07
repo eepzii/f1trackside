@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/goccy/go-yaml"
 
@@ -32,7 +33,12 @@ func main() {
 	}
 
 	fmt.Println("Scrutineer Started")
+	fmt.Println()
+	fmt.Println("Need help interpreting this output? Read the workflow guide:")
+	fmt.Println("https://github.com/eepzii/f1trackside/tree/main/cmd/scrutineer#workflow")
+	fmt.Println()
 	fmt.Println("========================")
+	time.Sleep(3 * time.Second)
 	fmt.Println()
 
 	if *useConcurrency {
