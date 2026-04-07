@@ -30,6 +30,10 @@ func (s *Scrutineer) PrintTree() {
 	if s.HasSyntaxError {
 		fmt.Fprint(&sb, "  -> bad json syntax")
 	} else {
+		for err := range s.Root.Errors {
+			// empty struct error will never be present on the root object => no need to check it
+			fmt.Fprintf(&sb, "  ↳ %s\n", err)
+		}
 		s.Root.WriteTree(&sb, "")
 	}
 
