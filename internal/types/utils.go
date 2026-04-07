@@ -6,6 +6,17 @@ import (
 	"strconv"
 )
 
+type DynamicJSON[V any] map[string]V
+
+func (dm *DynamicJSON[V]) UnmarshalJSON(data []byte) error {
+	m, err := unmarshalDynamicJSON[V](data)
+	if err != nil {
+		return err
+	}
+	*dm = m
+	return nil
+}
+
 // unmarshalDynamicJSON handles fields that can be either a JSON array or a JSON map.
 // If it's an array, it converts it into a map using the index as the key.
 // If it's already a map, it just unmarshals it normally.
