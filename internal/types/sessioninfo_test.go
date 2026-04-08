@@ -74,7 +74,7 @@ func TestParseSessionInfo(t *testing.T) {
 					Name:      "Race",
 					StartDate: "2025-11-22T20:00:00",
 					EndDate:   "2025-11-22T22:00:00",
-					GmtOffset: "-08:00:00",
+					GMTOffset: "-08:00:00",
 					Path:      "2025/2025-11-22_Las_Vegas_Grand_Prix/2025-11-22_Race/",
 				},
 			},

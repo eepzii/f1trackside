@@ -60,11 +60,11 @@ func TestParseTimingData(t *testing.T) {
 							RacingNumber: "55",
 							Status:       valToPtr(0),
 							InPit:        valToPtr(true),
-							Sectors: Sectors{
+							Sectors: map[string]Sector{
 								"0": {
-									Value:  "38.404",
+									Value:  valToPtr("38.404"),
 									Status: valToPtr(1),
-									Segments: Segments{
+									Segments: map[string]Segment{
 										"0": {valToPtr(2)},
 										"1": {valToPtr(3)},
 									},
@@ -72,7 +72,7 @@ func TestParseTimingData(t *testing.T) {
 							},
 							Speeds: map[string]Speed{
 								"I1": {
-									Value:           "444",
+									Value:           valToPtr("444"),
 									Status:          valToPtr(4),
 									OverallFastest:  valToPtr(true),
 									PersonalFastest: valToPtr(true),
@@ -80,6 +80,7 @@ func TestParseTimingData(t *testing.T) {
 							},
 							LastLapTime: LastLapTime{
 								Status: valToPtr(5),
+								Value:  valToPtr(""),
 							},
 						},
 					},
@@ -126,26 +127,26 @@ func TestParseTimingData(t *testing.T) {
 					Lines: map[string]TimingDataLine{
 						"23": {
 							IntervalToPositionAhead: IntervalToPositionAhead{
-								Value: "+1.659",
+								Value: valToPtr("+1.659"),
 							},
-							Sectors: Sectors{
+							Sectors: map[string]Sector{
 								"0": {
-									Segments: Segments{
+									Segments: map[string]Segment{
 										"7": {valToPtr(6)},
 									},
 								},
 								"2": {
-									Value: "38.150",
+									Value: valToPtr("38.150"),
 								},
 							},
 							Speeds: map[string]Speed{
 								"FL": {
-									Value:          "322",
+									Value:          valToPtr("322"),
 									OverallFastest: valToPtr(false),
 								},
 							},
 							LastLapTime: LastLapTime{
-								Value:           "1:39.360",
+								Value:           valToPtr("1:39.360"),
 								PersonalFastest: valToPtr(false),
 							},
 						},

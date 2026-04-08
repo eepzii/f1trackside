@@ -5,6 +5,6 @@ type HeartbeatResponse struct {
 }
 
 type Heartbeat struct {
-	Utc        string `json:"Utc"`
-	IsKeyFrame *bool  `json:"_kf"`
+	UTC      string `json:"Utc"`
+	KeyFrame bool   `json:"_kf"`
 }

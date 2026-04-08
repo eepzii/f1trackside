@@ -5,7 +5,7 @@ type SessionStatusResponse struct {
 }
 
 type SessionStatus struct {
-	Status     string `json:"Status"`
-	Started    string `json:"Started"`
-	IsKeyFrame *bool  `json:"_kf"`
+	Started  string `json:"Started"`
+	Status   string `json:"Status"`
+	KeyFrame bool   `json:"_kf"`
 }

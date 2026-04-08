@@ -5,85 +5,87 @@ type TimingDataResponse struct {
 }
 
 type TimingData struct {
-	Lines map[string]TimingDataLine `json:"Lines"`
+	CutOffPercentage string                    `json:"CutOffPercentage"`
+	CutOffTime       *string                   `json:"CutOffTime"`
+	Lines            map[string]TimingDataLine `json:"Lines"`
+	NoEntries        DynamicJSON[*int]         `json:"NoEntries"`
+	SessionPart      *int                      `json:"SessionPart"`
+	Withheld         *bool                     `json:"Withheld"`
+	KeyFrame         bool                      `json:"_kf"`
 }
 
 type TimingDataLine struct {
-	GapToLeader             string                  `json:"GapToLeader"`
-	IntervalToPositionAhead IntervalToPositionAhead `json:"IntervalToPositionAhead"`
-	Line                    int                     `json:"Line"`
-	Position                string                  `json:"Position"`
-	ShowPosition            *bool                   `json:"ShowPosition"`
-	RacingNumber            string                  `json:"RacingNumber"`
-	Retired                 *bool                   `json:"Retired"`
-	InPit                   *bool                   `json:"InPit"`
-	PitOut                  *bool                   `json:"PitOut"`
-	Stopped                 *bool                   `json:"Stopped"`
-	Status                  *int                    `json:"Status"`
-	NumberOfLaps            int                     `json:"NumberOfLaps"`
-	NumberOfPitStops        *int                    `json:"NumberOfPitStops"`
-	Sectors                 Sectors                 `json:"Sectors"`
-	Speeds                  map[string]Speed        `json:"Speeds"`
-	BestLapTime             BestLapTime             `json:"BestLapTime"`
-	LastLapTime             LastLapTime             `json:"LastLapTime"`
+	BestLapTime             BestLapTime               `json:"BestLapTime"`
+	BestLapTimes            DynamicJSON[BestLapTimes] `json:"BestLapTimes"`
+	CutOff                  *bool                     `json:"Cutoff"`
+	GapToLeader             *string                   `json:"GapToLeader"`
+	InPit                   *bool                     `json:"InPit"`
+	IntervalToPositionAhead IntervalToPositionAhead   `json:"IntervalToPositionAhead"`
+	KnockedOut              *bool                     `json:"KnockedOut"`
+	LastLapTime             LastLapTime               `json:"LastLapTime"`
+	Line                    int                       `json:"Line"`
+	NumberOfLaps            int                       `json:"NumberOfLaps"`
+	NumberOfPitStops        int                       `json:"NumberOfPitStops"`
+	PitOut                  *bool                     `json:"PitOut"`
+	Position                string                    `json:"Position"`
+	RacingNumber            string                    `json:"RacingNumber"`
+	Retired                 *bool                     `json:"Retired"`
+	Sectors                 DynamicJSON[Sector]       `json:"Sectors"`
+	ShowPosition            *bool                     `json:"ShowPosition"`
+	Speeds                  map[string]Speed          `json:"Speeds"`
+	Stats                   DynamicJSON[Stat]         `json:"Stats"`
+	Status                  *int                      `json:"Status"`
+	Stopped                 *bool                     `json:"Stopped"`
+	TimeDiffToFastest       *string                   `json:"TimeDiffToFastest"`
+	TimeDiffToPositionAhead *string                   `json:"TimeDiffToPositionAhead"`
+	Deleted                 []string                  `json:"_deleted"`
+}
+
+type BestLapTime struct {
+	Lap     int      `json:"Lap"`
+	Value   *string  `json:"Value"`
+	Deleted []string `json:"_deleted"`
+}
+
+type BestLapTimes struct {
+	Lap   int     `json:"Lap"`
+	Value *string `json:"Value"`
 }
 
 type IntervalToPositionAhead struct {
-	Value    string `json:"Value"`
-	Catching *bool  `json:"Catching"`
+	Catching *bool   `json:"Catching"`
+	Value    *string `json:"Value"`
 }
 
-type Sectors map[string]Sector
+type LastLapTime struct {
+	OverallFastest  *bool   `json:"OverallFastest"`
+	PersonalFastest *bool   `json:"PersonalFastest"`
+	Status          *int    `json:"Status"`
+	Value           *string `json:"Value"`
+}
 
 type Sector struct {
-	Stopped         *bool    `json:"Stopped"`
-	PreviousValue   string   `json:"PreviousValue"`
-	Segments        Segments `json:"Segments"`
-	Value           string   `json:"Value"`
-	Status          *int     `json:"Status"`
-	OverallFastest  *bool    `json:"OverallFastest"`
-	PersonalFastest *bool    `json:"PersonalFastest"`
+	OverallFastest  *bool                `json:"OverallFastest"`
+	PersonalFastest *bool                `json:"PersonalFastest"`
+	PreviousValue   string               `json:"PreviousValue"`
+	Segments        DynamicJSON[Segment] `json:"Segments"`
+	Status          *int                 `json:"Status"`
+	Stopped         *bool                `json:"Stopped"`
+	Value           *string              `json:"Value"`
 }
-
-type Segments map[string]Segment
 
 type Segment struct {
 	Status *int `json:"Status"`
 }
 
 type Speed struct {
-	Value           string `json:"Value"`
-	Status          *int   `json:"Status"`
-	OverallFastest  *bool  `json:"OverallFastest"`
-	PersonalFastest *bool  `json:"PersonalFastest"`
+	OverallFastest  *bool   `json:"OverallFastest"`
+	PersonalFastest *bool   `json:"PersonalFastest"`
+	Status          *int    `json:"Status"`
+	Value           *string `json:"Value"`
 }
 
-type BestLapTime struct {
-	Value string `json:"Value"`
-	Lap   int    `json:"Lap"`
-}
-
-type LastLapTime struct {
-	Value           string `json:"Value"`
-	Status          *int   `json:"Status"`
-	OverallFastest  *bool  `json:"OverallFastest"`
-	PersonalFastest *bool  `json:"PersonalFastest"`
-}
-
-func (s *Sectors) UnmarshalJSON(data []byte) error {
-	m, err := unmarshalDynamicJSON[Sector](data)
-	if err != nil {
-		return err
-	}
-	*s = m
-	return nil
-}
-
-func (s *Segments) UnmarshalJSON(data []byte) error {
-	m, err := unmarshalDynamicJSON[Segment](data)
-	if err != nil {
-		return err
-	}
-	*s = m
-	return nil
+type Stat struct {
+	TimeDiffToFastest       *string `json:"TimeDiffToFastest"`
+	TimeDiffToPositionAhead *string `json:"TimeDifftoPositionAhead"`
 }

@@ -5,6 +5,7 @@ type LapCountResponse struct {
 }
 
 type LapCount struct {
-	CurrentLap int `json:"CurrentLap"`
-	TotalLaps  int `json:"TotalLaps"`
+	CurrentLap *int `json:"CurrentLap"`
+	TotalLaps  *int `json:"TotalLaps"`
+	KeyFrame   bool `json:"_kf"`
 }

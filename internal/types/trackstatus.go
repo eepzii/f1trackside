@@ -5,7 +5,7 @@ type TrackStatusResponse struct {
 }
 
 type TrackStatus struct {
-	Status     string `json:"Status"`
-	Message    string `json:"Message"`
-	IsKeyFrame *bool  `json:"_kf"`
+	Message  string `json:"Message"`
+	Status   string `json:"Status"`
+	KeyFrame bool   `json:"_kf"`
 }

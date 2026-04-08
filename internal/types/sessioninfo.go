@@ -5,33 +5,32 @@ type SessionInfoResponse struct {
 }
 
 type SessionInfo struct {
-	Meeting       Meeting       `json:"Meeting"`
-	SessionStatus string        `json:"SessionStatus"`
 	ArchiveStatus ArchiveStatus `json:"ArchiveStatus"`
-	Key           int           `json:"Key"`
-	Type          string        `json:"Type"`
-	Name          string        `json:"Name"`
-	StartDate     string        `json:"StartDate"`
 	EndDate       string        `json:"EndDate"`
-	GmtOffset     string        `json:"GmtOffset"`
+	GMTOffset     string        `json:"GmtOffset"`
+	Key           int           `json:"Key"`
+	Meeting       Meeting       `json:"Meeting"`
+	Name          string        `json:"Name"`
+	Number        int           `json:"Number"`
 	Path          string        `json:"Path"`
-	IsKeyFrame    *bool         `json:"_kf"`
+	SessionStatus string        `json:"SessionStatus"`
+	StartDate     string        `json:"StartDate"`
+	Type          string        `json:"Type"`
+	KeyFrame      bool          `json:"_kf"`
+}
+
+type ArchiveStatus struct {
+	Status string `json:"Status"`
 }
 
 type Meeting struct {
-	Key          int     `json:"Key"`
-	Name         string  `json:"Name"`
-	OfficialName string  `json:"OfficialName"`
-	Location     string  `json:"Location"`
-	Number       int     `json:"Number"`
-	Country      Country `json:"Country"`
 	Circuit      Circuit `json:"Circuit"`
-}
-
-type Country struct {
-	Key  int    `json:"Key"`
-	Code string `json:"Code"`
-	Name string `json:"Name"`
+	Country      Country `json:"Country"`
+	Key          int     `json:"Key"`
+	Location     string  `json:"Location"`
+	Name         string  `json:"Name"`
+	Number       int     `json:"Number"`
+	OfficialName string  `json:"OfficialName"`
 }
 
 type Circuit struct {
@@ -39,6 +38,8 @@ type Circuit struct {
 	ShortName string `json:"ShortName"`
 }
 
-type ArchiveStatus struct {
-	Status string `json:"Status"`
+type Country struct {
+	Code string `json:"Code"`
+	Key  int    `json:"Key"`
+	Name string `json:"Name"`
 }

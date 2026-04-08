@@ -31,25 +31,29 @@ func TestParseDriverList(t *testing.T) {
         		        "Reference":"LANNOR01",
         		        "HeadshotUrl":"https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
         		        "PublicIdRight":"common/f1/2025/mclaren/lannor01/2025mclarenlannor01right"
-        			}
+        			},
+					"_kf": true
         		}
         	}`),
 			want: DriverListResponse{
-				DriverList: map[string]Driver{
-					"4": {
-						RacingNumber:  "4",
-						BroadcastName: "L NORRIS",
-						FullName:      "Lando NORRIS",
-						Tla:           "NOR",
-						Line:          1,
-						TeamName:      "McLaren",
-						TeamColor:     "F47600",
-						FirstName:     "Lando",
-						LastName:      "Norris",
-						Reference:     "LANNOR01",
-						HeadshotUrl:   "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
-						PublicIdRight: "common/f1/2025/mclaren/lannor01/2025mclarenlannor01right",
+				DriverList: DriverList{
+					Drivers: map[string]Driver{
+						"4": {
+							RacingNumber:  "4",
+							BroadcastName: "L NORRIS",
+							FullName:      "Lando NORRIS",
+							Tla:           "NOR",
+							Line:          1,
+							TeamName:      "McLaren",
+							TeamColor:     "F47600",
+							FirstName:     "Lando",
+							LastName:      "Norris",
+							Reference:     "LANNOR01",
+							HeadshotURL:   "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
+							PublicIDRight: "common/f1/2025/mclaren/lannor01/2025mclarenlannor01right",
+						},
 					},
+					KeyFrame: true,
 				},
 			},
 		},
@@ -62,17 +66,19 @@ func TestParseDriverList(t *testing.T) {
                 }
             }`),
 			want: DriverListResponse{
-				DriverList: map[string]Driver{
-					"30": {Line: 9},
-					"16": {Line: 8},
+				DriverList: DriverList{
+					Drivers: map[string]Driver{
+						"30": {Line: 9},
+						"16": {Line: 8},
+					},
 				},
 			},
 		},
 		{
 			name:  "empty .DriverList",
-			input: []byte(`{"DriverList":{}}`),
+			input: []byte(`{}`),
 			want: DriverListResponse{
-				DriverList: map[string]Driver{},
+				DriverList: DriverList{},
 			},
 		},
 	}

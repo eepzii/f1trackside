@@ -46,7 +46,7 @@ func TestParseTimingAppData(t *testing.T) {
 							RacingNumber: "44",
 							Line:         3,
 							GridPos:      "3",
-							Stints: Stints{
+							Stints: map[string]Stint{
 								"0": {
 									LapTime:         "1:40.526",
 									LapNumber:       3,
@@ -93,7 +93,7 @@ func TestParseTimingAppData(t *testing.T) {
 					Lines: map[string]TimingAppDataLine{
 						"16": {
 							RacingNumber: "16",
-							Stints: Stints{
+							Stints: map[string]Stint{
 								"0": {
 									Compound:        "MEDIUM",
 									New:             "true",
@@ -138,14 +138,14 @@ func TestParseTimingAppData(t *testing.T) {
 				TimingAppData: TimingAppData{
 					Lines: map[string]TimingAppDataLine{
 						"22": {
-							Stints: Stints{
+							Stints: map[string]Stint{
 								"0": {
 									TotalLaps: valToPtr(1),
 								},
 							},
 						},
 						"43": {
-							Stints: Stints{
+							Stints: map[string]Stint{
 								"0": {
 									Compound: "SOFT",
 								},

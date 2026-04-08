@@ -5,34 +5,24 @@ type TimingAppDataResponse struct {
 }
 
 type TimingAppData struct {
-	Lines map[string]TimingAppDataLine `json:"Lines"`
+	Lines    map[string]TimingAppDataLine `json:"Lines"`
+	KeyFrame bool                         `json:"_kf"`
 }
 
 type TimingAppDataLine struct {
-	RacingNumber string `json:"RacingNumber"`
-	Line         int    `json:"Line"`
-	GridPos      string `json:"GridPos"`
-	Stints       Stints `json:"Stints"`
+	GridPos      string             `json:"GridPos"`
+	Line         int                `json:"Line"`
+	RacingNumber string             `json:"RacingNumber"`
+	Stints       DynamicJSON[Stint] `json:"Stints"`
 }
 
 type Stint struct {
-	LapTime         string `json:"LapTime"`
-	LapNumber       int    `json:"LapNumber"`
-	LapFlags        *int   `json:"LapFlags"`
 	Compound        string `json:"Compound"`
+	LapFlags        *int   `json:"LapFlags"`
+	LapNumber       int    `json:"LapNumber"`
+	LapTime         string `json:"LapTime"`
 	New             string `json:"New"`
-	TyresNotChanged string `json:"TyresNotChanged"`
-	TotalLaps       *int   `json:"TotalLaps"`
 	StartLaps       *int   `json:"StartLaps"`
-}
-
-type Stints map[string]Stint
-
-func (s *Stints) UnmarshalJSON(data []byte) error {
-	m, err := unmarshalDynamicJSON[Stint](data)
-	if err != nil {
-		return err
-	}
-	*s = m
-	return nil
+	TotalLaps       *int   `json:"TotalLaps"`
+	TyresNotChanged string `json:"TyresNotChanged"`
 }
