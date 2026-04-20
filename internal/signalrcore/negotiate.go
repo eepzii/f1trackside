@@ -7,8 +7,8 @@ import (
 	"net/url"
 )
 
-func negotiate(url url.URL) (negotiationRes, error) {
-	var res = negotiationRes{}
+func negotiate(url url.URL) (negotiation, error) {
+	var res = negotiation{}
 
 	postReq, err := http.NewRequest(
 		http.MethodPost,
