@@ -1,6 +1,7 @@
 package signalrcore
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,17 @@ import (
 )
 
 func (c *Client) Start() error {
+	if !c.state.CompareAndSwap(StateNew, StateConnecting) {
+		return errors.New("connection already in progress or closed")
+	}
+
+	var success bool
+	defer func() {
+		if !success {
+			c.state.Store(StateNew)
+		}
+	}()
+
 	res, err := negotiate(*c.baseURL)
 	if err != nil {
 		return err
@@ -38,6 +50,9 @@ func (c *Client) Start() error {
 	if err := c.conn.WriteMessage(websocket.TextMessage, handshakeMessage); err != nil {
 		return err
 	}
+
+	success = true
+	c.state.Store(StateConnected)
 
 	return nil
 }
