@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (c *Client) Send(signalRMsg SignalRMessage) error {
+func (c *Client) Send(signalRMsg Message) error {
 	msg, err := json.Marshal(signalRMsg)
 	if err != nil {
 		return err

@@ -9,27 +9,32 @@ func New(negotiationUrl string, config *Config) (*Client, error) {
 	var c = &Client{}
 	var err error
 
-	c.negotiateUrl, err = url.Parse(negotiationUrl)
+	c.baseURL, err = url.Parse(negotiationUrl)
 	if err != nil {
 		return nil, err
 	}
-	c.negotiateUrl.JoinPath("negotiate")
+	c.baseURL.JoinPath("negotiate")
 
-	c.websocketUrl, err = url.Parse(negotiationUrl)
+	c.websocketURL, err = url.Parse(negotiationUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	switch c.websocketUrl.Scheme {
+	switch c.websocketURL.Scheme {
 	case "http":
-		c.websocketUrl.Scheme = "ws"
+		c.websocketURL.Scheme = "ws"
 	case "https":
-		c.websocketUrl.Scheme = "wss"
+		c.websocketURL.Scheme = "wss"
 	default:
 		return nil, errors.New("invalid url protocol")
 	}
 
-	c.config = config
+	c.token = config.Token
+
+	if config.Dialer == nil {
+		return nil, errors.New("dialer cannot be nil")
+	}
+	c.dialer = config.Dialer
 
 	return c, nil
 }
