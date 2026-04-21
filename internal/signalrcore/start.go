@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 func (c *Client) Start(ctx context.Context) error {
@@ -46,9 +44,8 @@ func (c *Client) Start(ctx context.Context) error {
 		return err
 	}
 
-	handshakeMessage := []byte(`{"protocol":"json","version":1}`)
-	handshakeMessage = append(handshakeMessage, 0x1e)
-	if err := c.conn.WriteMessage(websocket.TextMessage, handshakeMessage); err != nil {
+	err = c.handshake(ctx)
+	if err != nil {
 		return err
 	}
 
