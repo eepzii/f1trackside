@@ -43,15 +43,3 @@ func (c *Client) On() (<-chan []byte, chan error) {
 
 	return msg, errChan
 }
-
-func (c *Client) Stop() error {
-	if c.state.Load() != StateConnected {
-		return errors.New("client not connected")
-	}
-
-	var closeMsg = []byte("{\"type\":7}\u001e")
-	if err := c.conn.WriteMessage(websocket.TextMessage, closeMsg); err != nil {
-		return err
-	}
-	return nil
-}
