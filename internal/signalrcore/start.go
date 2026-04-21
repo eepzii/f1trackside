@@ -24,22 +24,30 @@ func (c *Client) Start(ctx context.Context) error {
 		return err
 	}
 
-	params := c.websocketURL.Query()
+	wsURL := *c.websocketURL
+	params := wsURL.Query()
+
 	params.Set("id", res.body.ConnectionID)
 	params.Set("transport", "webSockets")
-	c.websocketURL.RawQuery = params.Encode()
+	wsURL.RawQuery = params.Encode()
 
 	headers := make(http.Header)
+	var cookieStr string
 	for i, cookie := range res.cookies {
-		if i == 0 {
-			headers.Set("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-			continue
+		if i > 0 {
+			cookieStr += "; "
 		}
-		headers.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+		cookieStr += fmt.Sprintf("%s=%s", cookie.Name, cookie.Value)
 	}
-	headers.Set("Authorization", "Bearer "+c.token)
 
-	c.conn, _, err = c.dialer.Dial(c.websocketURL.String(), headers)
+	if cookieStr != "" {
+		headers.Set("Cookie", cookieStr)
+	}
+	if c.token != "" {
+		headers.Set("Authorization", "Bearer "+c.token)
+	}
+
+	c.conn, _, err = c.dialer.DialContext(ctx, wsURL.String(), headers)
 	if err != nil {
 		return err
 	}
@@ -53,6 +61,8 @@ func (c *Client) Start(ctx context.Context) error {
 
 	success = true
 	c.state.Store(StateConnected)
+
+	c.logger.Info("connected to signalR server", "url", wsURL.Host)
 
 	return nil
 }
