@@ -1,39 +1,43 @@
 package signalrcore
 
 import (
+	"context"
 	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
 	"net/url"
 )
 
-func negotiate(url url.URL) (negotiation, error) {
-	var res = negotiation{}
+func (c *Client) negotiate(ctx context.Context, baseURL url.URL) (negotiation, error) {
+	res := negotiation{}
 
-	postReq, err := http.NewRequest(
+	negotiateURL := baseURL.JoinPath("negotiate").String()
+
+	postReq, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodPost,
-		url.String()+"/negotiate",
+		negotiateURL,
 		nil,
 	)
 	if err != nil {
 		return res, err
 	}
 
-	negotiationRes, err := http.DefaultClient.Do(postReq)
+	httpRes, err := c.client.Do(postReq)
 	if err != nil {
 		return res, err
 	}
+	defer httpRes.Body.Close()
 
-	body, err := io.ReadAll(negotiationRes.Body)
+	if httpRes.StatusCode != http.StatusOK {
+		return res, fmt.Errorf("negotiation failed: %s", httpRes.Status)
+	}
+
+	err = json.NewDecoder(httpRes.Body).Decode(&res.body)
 	if err != nil {
 		return res, err
 	}
-
-	if err := json.Unmarshal(body, &res.body); err != nil {
-		return res, err
-	}
-	negotiationRes.Body.Close()
-	res.cookies = append(res.cookies, negotiationRes.Cookies()...)
+	res.cookies = append(res.cookies, httpRes.Cookies()...)
 
 	return res, nil
 }
