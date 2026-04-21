@@ -49,6 +49,8 @@ func (c *Client) Start(ctx context.Context) error {
 		return err
 	}
 
+	go c.listen()
+
 	success = true
 	c.state.Store(StateConnected)
 
