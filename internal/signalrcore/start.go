@@ -1,6 +1,7 @@
 package signalrcore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (c *Client) Start() error {
+func (c *Client) Start(ctx context.Context) error {
 	if !c.state.CompareAndSwap(StateNew, StateConnecting) {
 		return errors.New("connection already in progress or closed")
 	}
@@ -20,7 +21,7 @@ func (c *Client) Start() error {
 		}
 	}()
 
-	res, err := negotiate(*c.baseURL)
+	res, err := c.negotiate(ctx, *c.baseURL)
 	if err != nil {
 		return err
 	}
