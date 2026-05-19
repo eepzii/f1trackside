@@ -11,36 +11,26 @@ import (
 
 func (c *Client) handshake(ctx context.Context) error {
 
-	handshakeMessage := []byte(`{"protocol":"json","version":1}`)
-	handshakeMessage = append(handshakeMessage, 0x1e)
-
+	handshakeMessage := append([]byte(`{"protocol":"json","version":1}`), 0x1e)
 	if err := c.write(ctx, websocket.TextMessage, handshakeMessage); err != nil {
 		return err
 	}
 
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		deadline = time.Now().Add(5 * time.Second)
-	}
-
-	if err := c.conn.SetReadDeadline(deadline); err != nil {
-		return err
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := c.conn.SetReadDeadline(deadline); err != nil {
+			return fmt.Errorf("failed to set read deadline: %w", err)
+		}
+		defer c.conn.SetReadDeadline(time.Time{})
 	}
 
 	_, msg, err := c.conn.ReadMessage()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read handshake message: %w", err)
 	}
 
-	if err := c.conn.SetReadDeadline(time.Time{}); err != nil {
-		return err
-	}
-
-	successMsg := []byte("{}")
-	successMsg = append(successMsg, 0x1e)
-
+	successMsg := append([]byte("{}"), 0x1e)
 	if !bytes.Equal(msg, successMsg) {
-		return fmt.Errorf("handshake failed: unexpected response %q", msg)
+		return fmt.Errorf("unexpected response %q: %w", msg, errHandshake)
 	}
 
 	return nil
