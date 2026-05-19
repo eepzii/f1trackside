@@ -2,23 +2,28 @@ package signalrcore
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
 func (c *Client) write(ctx context.Context, msgType int, data []byte) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("write aborted: %w", err)
+	}
+
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
 
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		deadline = time.Now().Add(5 * time.Second)
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := c.conn.SetWriteDeadline(deadline); err != nil {
+			return fmt.Errorf("failed to set write deadline: %w", err)
+		}
+		defer c.conn.SetWriteDeadline(time.Time{})
 	}
 
-	if err := c.conn.SetWriteDeadline(deadline); err != nil {
-		return err
+	if err := c.conn.WriteMessage(msgType, data); err != nil {
+		return fmt.Errorf("write failed (size %d bytes): %w", len(data), err)
 	}
 
-	defer c.conn.SetWriteDeadline(time.Time{})
-
-	return c.conn.WriteMessage(msgType, data)
+	return nil
 }
