@@ -20,22 +20,22 @@ func (c *Client) negotiate(ctx context.Context, baseURL url.URL) (negotiation, e
 		nil,
 	)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("failed to create negotiation request: %w", err)
 	}
 
 	httpRes, err := c.client.Do(postReq)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("negotiation request failed: %w", err)
 	}
 	defer httpRes.Body.Close()
 
 	if httpRes.StatusCode != http.StatusOK {
-		return res, fmt.Errorf("negotiation failed: %s", httpRes.Status)
+		return res, fmt.Errorf("server rejected negotiation with status %s: %w", httpRes.Status, errNegotiation)
 	}
 
 	err = json.NewDecoder(httpRes.Body).Decode(&res.body)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("failed to decode negotiation response: %w", err)
 	}
 	res.cookies = append(res.cookies, httpRes.Cookies()...)
 
