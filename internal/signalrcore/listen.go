@@ -42,7 +42,19 @@ func (c *Client) listen() {
 
 			switch msg.Type {
 			case 1:
-				c.handleInvocation(msg)
+				err := c.handleInvocation(msg)
+
+				if errors.Is(err, errChannelUnavailable) || errors.Is(err, errBufferOverflow) {
+					c.logger.Warn("invocation dropped",
+						"target", msg.Target,
+						"reason", err,
+					)
+					continue
+				}
+
+				if err != nil {
+					c.logger.Error("unexpected error", "reason", err)
+				}
 			case 3:
 				c.handleCompletion(msg)
 			case 6:

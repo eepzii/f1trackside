@@ -3,6 +3,8 @@ package signalrcore
 import "errors"
 
 var (
-	errHandshake   = errors.New("handshake failed")
-	errNegotiation = errors.New("negotiation failed")
+	errBufferOverflow     = errors.New("buffer overflow")
+	errChannelUnavailable = errors.New("channel unavailable")
+	errHandshake          = errors.New("handshake failed")
+	errNegotiation        = errors.New("negotiation failed")
 )
