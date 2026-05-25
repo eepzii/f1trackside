@@ -1,14 +1,17 @@
 package signalrcore
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
-func (c *Client) handleInvocation(msg Message) {
+func (c *Client) handleInvocation(msg Message) error {
 	c.eventMu.Lock()
-	ch, ok := c.eventChan[msg.Target]
-	c.eventMu.Unlock()
+	defer c.eventMu.Unlock()
 
+	ch, ok := c.eventChan[msg.Target]
 	if !ok {
-		return
+		return errChannelUnavailable
 	}
 
 	var err error
@@ -21,13 +24,12 @@ func (c *Client) handleInvocation(msg Message) {
 		Data: msg.Arguments,
 		Err:  err,
 	}:
-		c.logger.Debug("event sent", "target", msg.Target, "buffer_size", len(ch))
+		c.logger.Debug("event handled", "target", msg.Target, "buffer_size", len(ch))
 	default:
-		c.logger.Warn("dropping server invocation: subscriber buffer overflow",
-			"target", msg.Target,
-			"buffer_capacity", cap(ch),
-		)
+		return fmt.Errorf("%w (capacity: %d)", errBufferOverflow, cap(ch))
 	}
+
+	return nil
 }
 
 func (c *Client) handleCompletion(msg Message) {
