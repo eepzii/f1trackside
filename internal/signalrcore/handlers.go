@@ -32,19 +32,26 @@ func (c *Client) handleInvocation(msg Message) error {
 	return nil
 }
 
-func (c *Client) handleCompletion(msg Message) {
+func (c *Client) handleCompletion(msg Message) error {
 	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+
 	ch, ok := c.pendingChan[msg.InvocationID]
-	c.pendingMu.Unlock()
 	if !ok {
-		c.logger.Warn("received completion for untracked invocation",
+		return errChannelUnavailable
+	}
+
+	select {
+	case ch <- msg:
+		c.logger.Debug("completion handled",
 			"invocation_id", msg.InvocationID,
 			"buffer_size", len(ch),
-			"note", "request may have timed out or been cancelled",
 		)
-		return
+	default:
+		return fmt.Errorf("%w (capacity: %d)", errBufferOverflow, cap(ch))
 	}
-	ch <- msg
+
+	return nil
 }
 
 func (c *Client) handleClose(msg Message) {

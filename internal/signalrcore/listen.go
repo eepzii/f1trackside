@@ -56,7 +56,19 @@ func (c *Client) listen() {
 					c.logger.Error("unexpected error", "reason", err)
 				}
 			case 3:
-				c.handleCompletion(msg)
+				err := c.handleCompletion(msg)
+
+				if errors.Is(err, errChannelUnavailable) || errors.Is(err, errBufferOverflow) {
+					c.logger.Warn("completion dropped",
+						"invocation_id", msg.InvocationID,
+						"reason", err,
+					)
+					continue
+				}
+
+				if err != nil {
+					c.logger.Error("unexpected error", "reason", err)
+				}
 			case 6:
 				c.logger.Debug("ping received")
 			case 7:
