@@ -163,3 +163,92 @@ func TestHandleInvocation_Returns(t *testing.T) {
 		}
 	})
 }
+
+func TestHandleCompletion_Mutex(t *testing.T) {
+	client := &Client{
+		pendingChan: make(map[string]chan Message),
+		logger:      slog.New(slog.DiscardHandler),
+	}
+
+	client.pendingChan["id1"] = make(chan Message, 1)
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		<-start
+		client.handleCompletion(Message{
+			InvocationID: "id1",
+		})
+	})
+
+	wg.Go(func() {
+		<-start
+		client.pendingMu.Lock()
+		if ch, ok := client.pendingChan["id1"]; ok {
+			delete(client.pendingChan, "id1")
+			close(ch)
+		}
+		client.pendingMu.Unlock()
+	})
+
+	close(start)
+	wg.Wait()
+}
+
+func TestHandleCompletion_Returns(t *testing.T) {
+
+	t.Run("nil", func(t *testing.T) {
+		client := &Client{
+			pendingChan: make(map[string]chan Message),
+			logger:      slog.New(slog.DiscardHandler),
+		}
+
+		id := "test"
+		client.pendingChan[id] = make(chan Message, 1)
+
+		err := client.handleCompletion(Message{
+			InvocationID: id,
+		})
+
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+	})
+
+	t.Run("channel unavailable", func(t *testing.T) {
+		client := &Client{}
+
+		err := client.handleCompletion(Message{})
+
+		if !errors.Is(err, errChannelUnavailable) {
+			t.Fatalf("expected %v, got %v", errChannelUnavailable, err)
+		}
+	})
+
+	t.Run("buffer overflow", func(t *testing.T) {
+		client := &Client{
+			pendingChan: make(map[string]chan Message),
+			logger:      slog.New(slog.DiscardHandler),
+		}
+
+		id := "test"
+		client.pendingChan[id] = make(chan Message)
+
+		errChan := make(chan error)
+		go func() {
+			errChan <- client.handleCompletion(Message{
+				InvocationID: id,
+			})
+		}()
+
+		select {
+		case err := <-errChan:
+			if !errors.Is(err, errBufferOverflow) {
+				t.Fatalf("expected %v, got %v", errBufferOverflow, err)
+			}
+		case <-time.NewTimer(time.Second).C:
+			t.Fatalf("expected %v, got timed out function", errBufferOverflow)
+		}
+	})
+}
