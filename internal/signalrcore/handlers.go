@@ -53,14 +53,3 @@ func (c *Client) handleCompletion(msg Message) error {
 
 	return nil
 }
-
-func (c *Client) handleClose(msg Message) {
-	var err error
-	if msg.Error != "" {
-		err = errors.New(msg.Error)
-	}
-
-	c.errorMu.Lock()
-	c.err = err
-	c.errorMu.Unlock()
-}
