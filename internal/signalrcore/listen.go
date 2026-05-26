@@ -72,7 +72,20 @@ func (c *Client) listen() {
 			case 6:
 				c.logger.Debug("ping received")
 			case 7:
-				c.handleClose(msg)
+				if msg.Error == "" {
+					time.AfterFunc(3*time.Second, func() {
+						c.conn.Close()
+					})
+
+					c.logger.Debug("graceful disconnect")
+					continue
+				}
+
+				c.errorMu.Lock()
+				c.err = errors.New(msg.Error)
+				c.errorMu.Unlock()
+
+				c.logger.Warn("server terminated connection", "reason", msg.Error)
 				return
 			default:
 				c.logger.Error("message type unsupported",
