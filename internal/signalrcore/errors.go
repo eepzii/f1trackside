@@ -7,4 +7,5 @@ var (
 	errChannelUnavailable = errors.New("channel unavailable")
 	errHandshake          = errors.New("handshake failed")
 	errNegotiation        = errors.New("negotiation failed")
+	errServerClosed       = errors.New("closed by server")
 )
