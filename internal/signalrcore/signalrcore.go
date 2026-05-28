@@ -1,7 +1,7 @@
 package signalrcore
 
 import (
-	"errors"
+	"fmt"
 	"log/slog"
 	"net/url"
 	"time"
@@ -9,19 +9,19 @@ import (
 
 func New(httpURL string, config *Config) (*Client, error) {
 	if config == nil {
-		return nil, errors.New("config cannot be nil")
+		return nil, fmt.Errorf("config cannot be nil: %w", errInvalidInput)
 	}
 
 	httpParsedURL, err := url.Parse(httpURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
 	// Parse the URL a second time to create a completely independent instance.
 	// Copying the url.URL struct directly would result in a shallow copy of its internal pointers.
 	wsParsedURL, err := url.Parse(httpURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
 	switch wsParsedURL.Scheme {
@@ -30,15 +30,15 @@ func New(httpURL string, config *Config) (*Client, error) {
 	case "https":
 		wsParsedURL.Scheme = "wss"
 	default:
-		return nil, errors.New("invalid URL protocol")
+		return nil, fmt.Errorf("invalid URL protocol: %w", errInvalidInput)
 	}
 
 	if config.Client == nil {
-		return nil, errors.New("http client cannot be nil")
+		return nil, fmt.Errorf("http client cannot be nil: %w", errInvalidConfig)
 	}
 
 	if config.Dialer == nil {
-		return nil, errors.New("websocket dialer cannot be nil")
+		return nil, fmt.Errorf("websocket dialer cannot be nil: %w", errInvalidConfig)
 	}
 
 	var logger *slog.Logger
@@ -46,7 +46,6 @@ func New(httpURL string, config *Config) (*Client, error) {
 		logger = config.Logger
 	} else {
 		logger = slog.New(slog.DiscardHandler)
-
 	}
 
 	var idleTimeout time.Duration
