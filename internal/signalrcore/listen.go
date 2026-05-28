@@ -4,19 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
 func (c *Client) listen() {
 	defer func() {
-		close(c.doneChan)
 		c.cleanUp()
+		close(c.doneChan)
 	}()
 
 	for {
 		if err := c.conn.SetReadDeadline(time.Now().Add(c.idleTimeout)); err != nil {
 			c.errorMu.Lock()
-			c.err = errors.New("cannot set read deadline")
+			c.err = fmt.Errorf("failed to set read deadline: %w", err)
 			c.errorMu.Unlock()
 			return
 		}
@@ -24,7 +25,7 @@ func (c *Client) listen() {
 		_, data, err := c.conn.ReadMessage()
 		if err != nil {
 			c.errorMu.Lock()
-			c.err = err
+			c.err = fmt.Errorf("read loop closed: %w", err)
 			c.errorMu.Unlock()
 			return
 		}
@@ -36,7 +37,8 @@ func (c *Client) listen() {
 
 			var msg Message
 			if err := json.Unmarshal(sub, &msg); err != nil {
-				c.logger.Error("failed to parse message", "raw_message", msg)
+				c.logger.Error("failed to parse message", "error", err, "size", len(sub))
+				c.logger.Debug("malformed message payload", "raw_message", string(sub))
 				continue
 			}
 
@@ -53,7 +55,7 @@ func (c *Client) listen() {
 				}
 
 				if err != nil {
-					c.logger.Error("unexpected error", "reason", err)
+					c.logger.Error("failed to handle invocation", "reason", err)
 				}
 			case 3:
 				err := c.handleCompletion(msg)
@@ -67,7 +69,7 @@ func (c *Client) listen() {
 				}
 
 				if err != nil {
-					c.logger.Error("unexpected error", "reason", err)
+					c.logger.Error("failed to handle completion", "reason", err)
 				}
 			case 6:
 				c.logger.Debug("ping received")
@@ -82,17 +84,19 @@ func (c *Client) listen() {
 				}
 
 				c.errorMu.Lock()
-				c.err = errors.New(msg.Error)
+				c.err = fmt.Errorf("%w (%s)", errServerClosed, msg.Error)
 				c.errorMu.Unlock()
 
 				c.logger.Warn("server terminated connection", "reason", msg.Error)
 				return
 			default:
-				c.logger.Error("message type unsupported",
+				c.logger.Error("unsupported message type",
 					"type", msg.Type,
 					"target", msg.Target,
-					"raw_message", msg,
+					"size", len(sub),
 				)
+
+				c.logger.Debug("unsupported message payload", "raw_message", string(sub))
 			}
 		}
 	}
