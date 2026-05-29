@@ -8,6 +8,7 @@ var (
 	errHandshake          = errors.New("handshake failed")
 	errInvalidConfig      = errors.New("invalid configuration")
 	errInvalidInput       = errors.New("invalid input parameter")
+	errInvalidState       = errors.New("invalid client state")
 	errNegotiation        = errors.New("negotiation failed")
 	errServerClosed       = errors.New("closed by server")
 )

@@ -2,20 +2,23 @@ package signalrcore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 )
 
 func (c *Client) Start(ctx context.Context) error {
 	if !c.state.CompareAndSwap(StateNew, StateConnecting) {
-		return errors.New("connection already in progress or closed")
+		return fmt.Errorf("client must be in a new state to start: %w", errInvalidState)
 	}
 
 	var success bool
 	defer func() {
 		if !success {
 			c.state.Store(StateNew)
+
+			if c.conn != nil {
+				c.conn.Close()
+			}
 		}
 	}()
 
@@ -49,7 +52,7 @@ func (c *Client) Start(ctx context.Context) error {
 
 	c.conn, _, err = c.dialer.DialContext(ctx, wsURL.String(), headers)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to dial to %s: %w", wsURL.String(), err)
 	}
 
 	err = c.handshake(ctx)
@@ -57,10 +60,10 @@ func (c *Client) Start(ctx context.Context) error {
 		return err
 	}
 
-	go c.listen()
-
 	success = true
 	c.state.Store(StateConnected)
+
+	go c.listen()
 
 	c.logger.Info("connected to signalR server", "url", wsURL.Host)
 
