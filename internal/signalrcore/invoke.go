@@ -14,9 +14,14 @@ func (c *Client) Invoke(ctx context.Context, target string, arguments ...any) (j
 		return nil, fmt.Errorf("cannot invoke %q: %w", target, errNotConnected)
 	}
 
-	args, err := json.Marshal(arguments)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal arguments on %q: %w", target, err)
+	args := []byte("[]")
+	if len(arguments) > 0 {
+		var err error
+
+		args, err = json.Marshal(arguments)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal arguments on %q: %w", target, err)
+		}
 	}
 
 	nextID := c.invocationID.Add(1)
