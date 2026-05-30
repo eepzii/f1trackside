@@ -3,7 +3,6 @@ package signalrcore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -12,12 +11,12 @@ import (
 
 func (c *Client) Invoke(ctx context.Context, target string, arguments ...any) (json.RawMessage, error) {
 	if c.state.Load() != StateConnected {
-		return nil, errors.New("client not connected")
+		return nil, fmt.Errorf("cannot invoke %q: %w", target, errNotConnected)
 	}
 
 	args, err := json.Marshal(arguments)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal arguments on %q: %w", target, err)
 	}
 
 	nextID := c.invocationID.Add(1)
@@ -43,7 +42,7 @@ func (c *Client) Invoke(ctx context.Context, target string, arguments ...any) (j
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal invocation on %q: %w", target, err)
 	}
 
 	msg = append(msg, 0x1e)
@@ -54,14 +53,14 @@ func (c *Client) Invoke(ctx context.Context, target string, arguments ...any) (j
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("invocation %q aborted by context: %w", target, ctx.Err())
 	case reply, ok := <-receiverChan:
 		if !ok {
-			return nil, errors.New("pending channel for invocation closed")
+			return nil, fmt.Errorf("pending channel closed unexpectedly: %w", errChannelUnavailable)
 		}
 
 		if reply.Error != "" {
-			return nil, fmt.Errorf("invocation failed with %s", reply.Error)
+			return nil, fmt.Errorf("invocation rejected with %q: %w", reply.Error, errInvocation)
 		}
 
 		return reply.Result, nil
