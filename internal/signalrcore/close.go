@@ -3,33 +3,25 @@ package signalrcore
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"time"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
 
 func (c *Client) Close(ctx context.Context) error {
-	_, ok := ctx.Deadline()
-	if !ok {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-	}
-
 	for {
 		current := c.state.Load()
 
 		if current == StateNew || current == StateClosed {
-			return errors.New("connection already closed")
+			return fmt.Errorf("connection already closed: %w", errInvalidState)
 		}
 
 		if current == StateClosing {
-			return errors.New("connection actively closing")
+			return fmt.Errorf("connection actively closing: %w", errInvalidState)
 		}
 
 		if current == StateConnecting {
-			return errors.New("cannot close while connecting")
+			return fmt.Errorf("cannot close while connecting: %w", errInvalidState)
 		}
 
 		if c.state.CompareAndSwap(current, StateClosing) {
@@ -53,7 +45,7 @@ func (c *Client) Close(ctx context.Context) error {
 		},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal closing message: %w", err)
 	}
 
 	msg = append(msg, 0x1e)
