@@ -5,6 +5,7 @@ import "errors"
 var (
 	errBufferOverflow     = errors.New("buffer overflow")
 	errChannelUnavailable = errors.New("channel unavailable")
+	errDuplicateListener  = errors.New("duplicate listener")
 	errHandshake          = errors.New("handshake failed")
 	errInvalidConfig      = errors.New("invalid configuration")
 	errInvalidInput       = errors.New("invalid input parameter")
