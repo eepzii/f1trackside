@@ -8,7 +8,7 @@ func (c *Client) On(target string) (<-chan Event, error) {
 
 	_, exists := c.eventChan[target]
 	if exists {
-		return nil, fmt.Errorf("target %q already has a listener", target)
+		return nil, fmt.Errorf("cannot listen on %q: %w", target, errDuplicateListener)
 	}
 
 	stream := make(chan Event, 100)
