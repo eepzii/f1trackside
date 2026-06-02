@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// Start establishes the underlying WebSocket connection to the SignalR server.
+//
+// The context governs the timeout and cancellation of the initial setup requests.
 func (c *Client) Start(ctx context.Context) error {
 	if !c.state.CompareAndSwap(StateNew, StateConnecting) {
 		return fmt.Errorf("client must be in a new state to start: %w", errInvalidState)
