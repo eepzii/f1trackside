@@ -9,6 +9,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Invoke calls a server-side hub method with the specified target and arguments, returning the raw JSON result.
+//
+// It blocks until the server replies, the connection fails, or the provided context expires.
 func (c *Client) Invoke(ctx context.Context, target string, arguments ...any) (json.RawMessage, error) {
 	if c.state.Load() != StateConnected {
 		return nil, fmt.Errorf("cannot invoke %q: %w", target, errNotConnected)

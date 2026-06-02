@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+// New initializes and returns a new SignalR Core client using the provided endpoint and config.
+//
+// The provided config must not be nil and must include both an HTTP client and a WebSocket dialer.
+// If omitted, default values are applied for the logger and idle timeout.
 func New(httpURL string, config *Config) (*Client, error) {
 	if config == nil {
 		return nil, fmt.Errorf("config cannot be nil: %w", errInvalidInput)

@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Client manages the SignalR connection lifecycle, internal state, and the concurrent routing of messages.
 type Client struct {
 	baseURL      *url.URL
 	websocketURL *url.URL
@@ -37,6 +38,7 @@ type Client struct {
 	state        atomic.Uint32
 }
 
+// Message represents a generalized SignalR Hub Protocol payload used for communicating with the server.
 type Message struct {
 	Type         int             `json:"type"`
 	Target       string          `json:"target,omitempty"`
@@ -46,6 +48,7 @@ type Message struct {
 	Error        string          `json:"error,omitempty"`
 }
 
+// Config defines the initialization options for creating a new SignalR client.
 type Config struct {
 	Client      *http.Client
 	Dialer      *websocket.Dialer
@@ -54,6 +57,7 @@ type Config struct {
 	Token       string
 }
 
+// Event encapsulates the raw data or error extracted from an incoming server message.
 type Event struct {
 	Data []byte
 	Err  error
