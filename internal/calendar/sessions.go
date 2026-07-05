@@ -11,7 +11,15 @@ import (
 )
 
 func newSessions(icsCalendar *ics.Calendar, logger *slog.Logger) []Session {
-	var f1Sessions []Session
+	f1Sessions := []Session{}
+
+	if icsCalendar == nil {
+		return f1Sessions
+	}
+
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
 
 	for _, event := range icsCalendar.Events() {
 		session, err := eventToSession(event)
@@ -34,6 +42,10 @@ func newSessions(icsCalendar *ics.Calendar, logger *slog.Logger) []Session {
 }
 
 func eventToSession(event *ics.VEvent) (Session, error) {
+	if event == nil {
+		return Session{}, fmt.Errorf("cannot parse nil event: %w", errInvalidInput)
+	}
+
 	summary := UnknownSession
 	summaryProperty := event.GetProperty(ics.ComponentPropertySummary)
 	if summaryProperty != nil && summaryProperty.Value != "" {
