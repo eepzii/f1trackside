@@ -9,10 +9,6 @@ import (
 func parseCacheDuration(cacheControl string) time.Duration {
 	defaultAge := 2 * time.Hour
 
-	if cacheControl == "" {
-		return defaultAge
-	}
-
 	for part := range strings.SplitSeq(cacheControl, ",") {
 		part = strings.ToLower(strings.TrimSpace(part))
 
