@@ -9,6 +9,10 @@ import (
 	ics "github.com/arran4/golang-ical"
 )
 
+// FetchCalendar retrieves, parses and chronologically sorts the F1 ICS calendar.
+//
+// It implements double-checked locking to safely read from and update the internal cache,
+// ensuring safe concurrent execution and preventing redundant network calls.
 func (c *Client) FetchCalendar(ctx context.Context) ([]Session, error) {
 	c.mu.RLock()
 	expiresAt := c.expiresAt
