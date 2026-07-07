@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Client holds the external dependencies and the internal cache state.
 type Client struct {
 	mu         sync.RWMutex
 	expiresAt  time.Time
@@ -15,6 +16,9 @@ type Client struct {
 	logger     *slog.Logger
 }
 
+// Session represents a parsed F1 session.
+//
+// It contains the core metadata of the VEVENT from the original ICS calendar.
 type Session struct {
 	UID       string
 	Title     string

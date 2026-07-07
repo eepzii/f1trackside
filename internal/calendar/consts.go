@@ -3,13 +3,16 @@ package calendar
 const (
 	calendarURL = "https://ics.ecal.com/ecal-sub/6a329f7fab23640002745fb7/Formula%201.ics"
 
+	// UnknownLocation is the fallback for a missing LOCATION property.
 	UnknownLocation = "Unknown Location"
-	UnknownSession  = "Unknown Session"
+	// UnknownSession is the fallback for a missing SUMMARY property.
+	UnknownSession = "Unknown Session"
 
 	cacheControl = "Cache-Control"
 	maxAge       = "max-age="
 )
 
+// SessionType represents a supported F1 session.
 type SessionType int
 
 const (
