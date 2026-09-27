@@ -15,8 +15,8 @@ func (s *Scheduler) Run(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 				s.mu.Lock()
-				for _, task := range s.tasks {
-					task.timer.Stop()
+				for _, entry := range s.tasks {
+					entry.timer.Stop()
 				}
 				s.mu.Unlock()
 				return
@@ -37,6 +37,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 			wg.Wait()
 			s.logger.Info("graceful shutdown: waiting for active tasks")
 			s.wg.Wait()
+			s.logger.Info("graceful shutdown: complete")
 			return
 		case <-ticker.C:
 			select {
