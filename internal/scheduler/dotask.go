@@ -41,14 +41,18 @@ func (s *Scheduler) doTask(ctx context.Context, task Task) func() {
 		}()
 
 		s.mu.Lock()
+		defer s.mu.Unlock()
 		if entry, ok := s.tasks[task.ID]; ok {
 			entry.isRunning = false
+
+			if ctx.Err() != nil {
+				return
+			}
 
 			if !entry.startsAt(task.StartTime) {
 				duration := time.Until(entry.task.StartTime)
 				entry.timer = time.AfterFunc(duration, s.doTask(ctx, entry.task))
 			}
 		}
-		s.mu.Unlock()
 	}
 }
