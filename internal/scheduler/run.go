@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+// Run is the main scheduling loop.
+//
+// It periodically polls the TaskProvider at the configured interval.
+// If a poll takes too long, it will discard the next poll until the current poll finishes.
 func (s *Scheduler) Run(ctx context.Context) {
 	trigger := make(chan struct{}, 1)
 	var wg sync.WaitGroup

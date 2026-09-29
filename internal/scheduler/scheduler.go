@@ -5,6 +5,10 @@ import (
 	"log/slog"
 )
 
+// New initializes and returns a new Scheduler using the provided config.
+//
+// The provided config must not be nil and must include both an interval greater than 0 and a TaskProvider.
+// If omitted, a default value for the logger is applied.
 func New(config *Config) (*Scheduler, error) {
 	if config == nil {
 		return nil, fmt.Errorf("config cannot be nil: %w", errInvalidInput)
